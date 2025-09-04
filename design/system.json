@@ -1,0 +1,31 @@
+{
+  "name": "Project Hunt clone",
+  "version": "1.0.0",
+  "colors": {
+    "primary": "#f97316",
+    "accent": "#0ea5e9",
+    "neutral": { "background": "#ffffff", "foreground": "#111111", "muted": "#e5e7eb" },
+    "dark": { "background": "#0b0b0c", "foreground": "#f4f4f5", "muted": "#27272a" }
+  },
+  "typography": {
+    "fonts": { "sans": "Inter", "mono": "Geist Mono" },
+    "weights": [400, 500, 600, 700],
+    "lineHeights": { "body": 1.5, "heading": 1.2 },
+    "letterSpacing": { "body": -0.01, "heading": -0.02 }
+  },
+  "layout": {
+    "container": 1152,
+    "contentMax": 768,
+    "radii": { "card": 16, "media": 14, "pill": 9999 },
+    "shadows": {
+      "card": "0 1px 2px rgba(0,0,0,0.06), 0 10px 24px rgba(0,0,0,0.06)",
+      "elevated": "0 6px 24px rgba(0,0,0,0.12)"
+    }
+  },
+  "components": {
+    "projectCard": { "mediaRadius": 14, "actionsHeight": 36 },
+    "votePill": { "icons": ["triangle-up-outline", "triangle-down-outline"], "countTabular": true },
+    "codeViewer": { "leftPanelWidth": 200, "copyButton": true }
+  },
+  "a11y": { "contrast": "AA", "focusRing": { "color": "#0ea5e9", "width": 2 } }
+}
