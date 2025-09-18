@@ -1,12 +1,13 @@
 import { Navbar } from "@/components/navbar"
+import Image from "next/image"
 import { getCurrentUser } from "@/lib/auth"
 import { getCurrentUserProfile } from "@/lib/user-profiles"
-import { listProjectsByUser } from "@/lib/data"
+import { listProjectsByUser, getUserStats } from "@/lib/data"
 import { ProjectCard } from "@/components/project-card"
 import { SignInButton, SignOutButton } from "@clerk/nextjs"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { LogOut, Plus, Edit, Globe, Github, Twitter, Linkedin, MapPin } from "lucide-react"
+import { LogOut, Plus, Edit, Globe, Github, Twitter, Linkedin, MapPin, BarChart3, ThumbsUp, MessageSquare, Users } from "lucide-react"
 import { ManageAccountButton } from "@/components/manage-account-button"
 import { ProfileEditButton } from "@/components/profile-edit-button"
 import { PageTransition, CardTransition } from "@/components/page-transitions"
@@ -38,6 +39,7 @@ export default async function ProfilePage() {
   }
 
   const projects = await listProjectsByUser(user.id)
+  const stats = await getUserStats(user.id)
 
   return (
     <main>
@@ -51,10 +53,15 @@ export default async function ProfilePage() {
                 <CardContent className="p-6">
                   <div className="flex flex-col items-center text-center">
                     <div className="relative mb-4">
-                      <img
+                      <Image
                         src={(profile?.avatarUrl || user.avatarUrl) || "/placeholder.svg?height=120&width=120&query=avatar"}
                         alt={`${profile?.displayName || user.name} avatar`}
+                        width={96}
+                        height={96}
                         className="h-24 w-24 rounded-full object-cover"
+                        priority={true}
+                        placeholder="blur"
+                        blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCdABmX/9k="
                       />
                       <ProfileEditButton profile={profile} className="absolute -bottom-2 -right-2" />
                     </div>
@@ -122,9 +129,39 @@ export default async function ProfilePage() {
                       </div>
                     )}
                     
-                    <p className="text-sm text-muted-foreground mb-6">
-                      {projects.length} project{projects.length !== 1 ? 's' : ''} shared
-                    </p>
+                    {/* Stats */}
+                    <div className="grid grid-cols-2 gap-3 mb-6 w-full">
+                      <div className="text-center p-3 bg-muted/30 rounded-lg">
+                        <div className="flex items-center justify-center gap-1 text-lg font-bold mb-1">
+                          <BarChart3 className="h-4 w-4 text-orange-600" />
+                          {stats.totalProjects}
+                        </div>
+                        <div className="text-xs text-muted-foreground">Projects</div>
+                      </div>
+                      <div className="text-center p-3 bg-muted/30 rounded-lg">
+                        <div className="flex items-center justify-center gap-1 text-lg font-bold mb-1">
+                          <ThumbsUp className="h-4 w-4 text-green-600" />
+                          {stats.totalVotesReceived}
+                        </div>
+                        <div className="text-xs text-muted-foreground">Votes</div>
+                      </div>
+                      <div className="text-center p-3 bg-muted/30 rounded-lg">
+                        <div className="flex items-center justify-center gap-1 text-lg font-bold mb-1">
+                          <MessageSquare className="h-4 w-4 text-blue-600" />
+                          {stats.totalCommentsReceived}
+                        </div>
+                        <div className="text-xs text-muted-foreground">Comments</div>
+                      </div>
+                      <Link href="/connections" className="block">
+                        <div className="text-center p-3 bg-muted/30 rounded-lg hover:bg-muted/50 transition-colors">
+                          <div className="flex items-center justify-center gap-1 text-lg font-bold mb-1">
+                            <Users className="h-4 w-4 text-purple-600" />
+                            {stats.totalConnections}
+                          </div>
+                          <div className="text-xs text-muted-foreground">Connections</div>
+                        </div>
+                      </Link>
+                    </div>
                     
                     <div className="w-full space-y-3">
                       <SignOutButton>

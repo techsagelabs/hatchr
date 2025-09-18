@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useRef } from "react"
+import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
@@ -118,10 +119,13 @@ export function ImageUpload({ value, onChange, disabled, label = "Image", requir
       {value ? (
         <div className="space-y-2">
           <div className="relative rounded-lg border-2 border-dashed border-muted-foreground/25 p-4">
-            <img
+            <Image
               src={value}
               alt="Uploaded preview"
+              width={400}
+              height={160}
               className="h-40 w-full rounded-lg object-cover"
+              loading="lazy"
               onError={() => setError('Failed to load image preview')}
             />
             <Button

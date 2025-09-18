@@ -9,6 +9,13 @@ import { useEffect, useState } from "react"
 import { ModeToggle } from "@/components/mode-toggle"
 import { SignInButton, SignUpButton, SignedIn, SignedOut, useUser } from "@clerk/nextjs"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import dynamic from "next/dynamic"
+
+// ✅ OPTIMIZED: Lazy load notifications component (heavy with SWR, modals)
+const NotificationsBell = dynamic(() => import("./notifications-bell").then(mod => ({ default: mod.NotificationsBell })), {
+  ssr: false,
+  loading: () => <div className="w-10 h-10" />, // Placeholder to prevent layout shift
+})
 
 export function Navbar() {
   const router = useRouter()
@@ -36,7 +43,7 @@ export function Navbar() {
       <div className="mx-auto grid max-w-6xl grid-cols-[1fr_minmax(280px,640px)_1fr] items-center gap-3 px-4 py-3">
         <Link href="/" className="flex items-center gap-2 justify-self-start">
           <div className="grid h-8 w-8 place-items-center rounded-md bg-orange-600 text-white font-semibold">T</div>
-          <span className="font-semibold">Takeo</span>
+          <span className="font-semibold">TechsageLabs</span>
         </Link>
 
         <form onSubmit={onSearch} className="hidden md:block justify-self-center w-full">
@@ -72,6 +79,7 @@ export function Navbar() {
             </SignUpButton>
           </SignedOut>
           <SignedIn>
+            <NotificationsBell />
             <Link href="/submit">
               <Button variant="default" className="bg-orange-600 hover:bg-orange-700">
                 Submit Project

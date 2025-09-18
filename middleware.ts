@@ -4,14 +4,17 @@ import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 const isProtectedRoute = createRouteMatcher([
   '/submit',
   '/profile',
+  '/notifications',
+  '/connections',
   '/api/projects/(.*)/(vote|comments)',
-  '/api/user/(.*)'
+  '/api/user/(.*)',
+  '/api/connections(.*)'
 ]);
 
-export default clerkMiddleware((auth, req) => {
+export default clerkMiddleware(async (auth, req) => {
   // Only protect specific routes, let everything else through
   if (isProtectedRoute(req)) {
-    auth().protect();
+    await auth.protect();
   }
 });
 

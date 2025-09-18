@@ -28,6 +28,7 @@ import {
   ArrowRight,
   CheckCircle
 } from "lucide-react"
+import { toast } from "@/hooks/use-toast"
 
 interface OnboardingModalProps {
   isOpen: boolean
@@ -54,6 +55,22 @@ export function OnboardingModal({ isOpen, userName, userAvatar, onComplete }: On
   const currentStepIndex = steps.indexOf(currentStep)
   const progress = ((currentStepIndex + 1) / steps.length) * 100
 
+  const parseErrorResponse = async (res: Response): Promise<string> => {
+    try {
+      const data = await res.json()
+      if (data?.error) return String(data.error)
+      if (data?.message) return String(data.message)
+      return JSON.stringify(data)
+    } catch {
+      try {
+        const text = await res.text()
+        return text || res.statusText || 'Unknown error'
+      } catch {
+        return res.statusText || 'Unknown error'
+      }
+    }
+  }
+
   const handleComplete = async () => {
     setSaving(true)
     try {
@@ -73,7 +90,8 @@ export function OnboardingModal({ isOpen, userName, userAvatar, onComplete }: On
       })
 
       if (!response.ok) {
-        throw new Error('Failed to save profile')
+        const reason = await parseErrorResponse(response)
+        throw new Error(`Failed to save profile: ${reason}`)
       }
 
       // Mark user as onboarded
@@ -82,7 +100,8 @@ export function OnboardingModal({ isOpen, userName, userAvatar, onComplete }: On
       })
 
       if (!onboardResponse.ok) {
-        throw new Error('Failed to complete onboarding')
+        const reason = await parseErrorResponse(onboardResponse)
+        throw new Error(`Failed to complete onboarding: ${reason}`)
       }
 
       setCurrentStep('complete')
@@ -100,7 +119,11 @@ export function OnboardingModal({ isOpen, userName, userAvatar, onComplete }: On
       
     } catch (error) {
       console.error('Error completing onboarding:', error)
-      alert('Failed to complete setup. Please try again.')
+      const message = error instanceof Error ? error.message : 'Unknown error'
+      toast({
+        title: 'Onboarding failed',
+        description: message,
+      })
     } finally {
       setSaving(false)
     }
@@ -144,7 +167,7 @@ export function OnboardingModal({ isOpen, userName, userAvatar, onComplete }: On
                 <Sparkles className="h-8 w-8 text-orange-600" />
               </div>
               <DialogHeader>
-                <DialogTitle className="text-2xl">Welcome to Takeo! 🎉</DialogTitle>
+                <DialogTitle className="text-2xl">Welcome to TechsageLabs! 🎉</DialogTitle>
                 <DialogDescription className="text-base">
                   Let's set up your profile so you can start sharing your amazing projects with the community.
                 </DialogDescription>
@@ -354,7 +377,7 @@ export function OnboardingModal({ isOpen, userName, userAvatar, onComplete }: On
               <DialogHeader>
                 <DialogTitle className="text-2xl">You're all set! 🚀</DialogTitle>
                 <DialogDescription className="text-base">
-                  Welcome to the Takeo community! You can now start sharing your projects and discovering amazing builds from other makers.
+                  Welcome to the TechsageLabs community! You can now start sharing your projects and discovering amazing builds from other makers.
                 </DialogDescription>
               </DialogHeader>
               <p className="text-sm text-muted-foreground mt-4">

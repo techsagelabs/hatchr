@@ -1,6 +1,7 @@
 "use client"
 
 import Link from "next/link"
+import Image from "next/image"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { MessageSquare, MoreHorizontal, Share2 } from "lucide-react"
@@ -131,15 +132,17 @@ export function ProjectCard({ project }: { project: ProjectWithUserVote }) {
             {videoUrl ? (
               <video src={videoUrl} controls preload="metadata" className="block h-auto w-full" />
             ) : (
-              <img
+              <Image
                 src={
                   mediaSrc || "/placeholder.svg?height=360&width=640&query=image%20%2F%20video" || "/placeholder.svg"
                 }
                 alt={`${project.title} preview`}
-                className="block h-auto w-full"
+                width={640}
+                height={360}
+                className="block h-auto w-full object-cover"
                 loading="lazy"
-                decoding="async"
-                referrerPolicy="no-referrer"
+                placeholder="blur"
+                blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCdABmX/9k="
                 onError={(e) => {
                   console.log('🖼️ Image load error for project:', project.title, {
                     originalSrc: mediaSrc,

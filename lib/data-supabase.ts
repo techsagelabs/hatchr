@@ -26,8 +26,14 @@ async function getUserPreferredAvatar(supabase: any, userId: string, fallbackAva
     if (!error && profile && profile.avatar_url) {
       return profile.avatar_url
     }
+    
+    // Log RLS or permission errors for debugging
+    if (error && error.code !== 'PGRST116') { // PGRST116 = no rows returned (normal)
+      console.warn(`Avatar lookup failed for user ${userId}:`, error.code, error.message)
+    }
   } catch (error) {
-    // Profile doesn't exist or error occurred, use fallback
+    // Profile doesn't exist or error occurred, use fallback silently
+    console.warn(`Avatar lookup exception for user ${userId}:`, error.message)
   }
   
   // Fall back to Clerk avatar or provided fallback
@@ -155,53 +161,104 @@ export async function getUserStats(userId: string): Promise<{
   totalProjects: number
   totalVotesReceived: number
   totalCommentsReceived: number
+  totalConnections: number
   joinedDate?: string
 }> {
   try {
     const supabase = await createServerSupabaseClient()
     
-    // Get total projects
-    const { count: projectCount } = await supabase
-      .from('projects')
-      .select('*', { count: 'exact' })
-      .eq('author_id', userId)
+    // ✅ OPTIMIZED: Single query with CTEs to get all stats at once
+    const { data, error } = await supabase.rpc('get_user_stats_optimized', {
+      target_user_id: userId
+    })
+
+    if (error) {
+      console.error('Error calling get_user_stats_optimized:', error)
+      // Fallback to original queries if RPC fails
+      return await getUserStatsLegacy(userId)
+    }
+
+    const stats = data?.[0]
+    if (!stats) {
+      return {
+        totalProjects: 0,
+        totalVotesReceived: 0,
+        totalCommentsReceived: 0,
+        totalConnections: 0
+      }
+    }
+
+    return {
+      totalProjects: parseInt(stats.total_projects) || 0,
+      totalVotesReceived: parseInt(stats.total_votes_received) || 0,
+      totalCommentsReceived: parseInt(stats.total_comments_received) || 0,
+      totalConnections: parseInt(stats.total_connections) || 0,
+      joinedDate: stats.joined_date || undefined
+    }
+  } catch (error) {
+    console.error('Error getting user stats:', error)
+    // Fallback to legacy implementation
+    return await getUserStatsLegacy(userId)
+  }
+}
+
+// ✅ OPTIMIZED: Legacy fallback function (same as original)
+async function getUserStatsLegacy(userId: string): Promise<{
+  totalProjects: number
+  totalVotesReceived: number
+  totalCommentsReceived: number
+  totalConnections: number
+  joinedDate?: string
+}> {
+  try {
+    const supabase = await createServerSupabaseClient()
     
-    // Get total votes received on all their projects
-    const { data: projects } = await supabase
-      .from('projects')
-      .select('upvotes, downvotes')
-      .eq('author_id', userId)
+    // Execute queries in parallel instead of sequentially  
+    const [
+      { count: projectCount },
+      { data: projects },
+      { count: connectionsCount },
+    ] = await Promise.all([
+      supabase.from('projects').select('*', { count: 'exact' }).eq('author_id', userId),
+      supabase.from('projects').select('id, upvotes, downvotes, created_at').eq('author_id', userId),
+      supabase.from('connections').select('*', { count: 'exact' }).eq('status', 'accepted').or(`requester_id.eq.${userId},recipient_id.eq.${userId}`),
+    ])
     
+    // Calculate votes from projects data
     const totalVotesReceived = projects?.reduce((sum, project) => 
-      sum + project.upvotes + project.downvotes, 0) || 0
+      sum + (project.upvotes || 0) + (project.downvotes || 0), 0) || 0
     
-    // Get total comments received on all their projects  
-    const { count: commentCount } = await supabase
-      .from('comments')
-      .select('*', { count: 'exact' })
-      .in('project_id', projects?.map(p => p.id) || [])
+    // Get comments count for user's projects (if user has projects)
+    let commentCount = 0
+    if (projects && projects.length > 0) {
+      const { count } = await supabase
+        .from('comments')
+        .select('*', { count: 'exact' })
+        .in('project_id', projects.map(p => p.id))
+      commentCount = count || 0
+    }
     
-    // Get joined date from oldest project
-    const { data: oldestProject } = await supabase
-      .from('projects')
-      .select('created_at')
-      .eq('author_id', userId)
-      .order('created_at', { ascending: true })
-      .limit(1)
-      .single()
+    // Get oldest project date
+    const oldestProject = projects?.length > 0 
+      ? projects.reduce((oldest, project) => 
+          !oldest || project.created_at < oldest.created_at ? project : oldest
+        )
+      : null
     
     return {
       totalProjects: projectCount || 0,
       totalVotesReceived,
-      totalCommentsReceived: commentCount || 0,
+      totalCommentsReceived: commentCount,
+      totalConnections: connectionsCount || 0,
       joinedDate: oldestProject?.created_at || undefined
     }
   } catch (error) {
-    console.error('Error getting user stats:', error)
+    console.error('Error in getUserStatsLegacy:', error)
     return {
       totalProjects: 0,
       totalVotesReceived: 0,
-      totalCommentsReceived: 0
+      totalCommentsReceived: 0,
+      totalConnections: 0
     }
   }
 }

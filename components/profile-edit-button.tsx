@@ -2,8 +2,14 @@
 
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
-import { ProfileEditModal } from "@/components/profile-edit-modal"
 import { Edit } from "lucide-react"
+import dynamic from "next/dynamic"
+
+// ✅ OPTIMIZED: Lazy load heavy profile modal (forms, validation, image upload)
+const ProfileEditModal = dynamic(() => import("@/components/profile-edit-modal").then(mod => ({ default: mod.ProfileEditModal })), {
+  ssr: false,
+  loading: () => null,
+})
 import { cn } from "@/lib/utils"
 import type { UserProfile } from "@/lib/user-profiles"
 

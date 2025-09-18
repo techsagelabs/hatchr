@@ -39,7 +39,13 @@ export async function getUserProfile(userId: string): Promise<UserProfile | null
       .single()
 
     if (error) {
-      console.error('Error fetching user profile:', error)
+      // Treat "no rows" as a non-error (profile not yet created)
+      const err: any = error
+      const isNoRows = err?.code === 'PGRST116' || (err?.details && String(err.details).toLowerCase().includes('results contain 0'))
+      if (isNoRows) {
+        return null
+      }
+      console.error('Error fetching user profile:', err?.message || err)
       return null
     }
 
@@ -55,7 +61,12 @@ export async function getCurrentUserProfile(): Promise<UserProfile | null> {
     const user = await getCurrentUser()
     if (!user) return null
 
-    return await getUserProfile(user.id)
+    const existing = await getUserProfile(user.id)
+    if (existing) return existing
+
+    // Attempt to create a minimal profile on first access (best-effort)
+    const created = await createOrUpdateUserProfile(user.id, user.name, user.avatarUrl)
+    return created
   } catch (error) {
     console.error('Error in getCurrentUserProfile:', error)
     return null
@@ -77,7 +88,7 @@ export async function createOrUpdateUserProfile(
         display_name: displayName,
         avatar_url: avatarUrl,
         updated_at: new Date().toISOString()
-      })
+      }, { onConflict: 'user_id' })
       .select()
       .single()
 
@@ -141,43 +152,20 @@ export async function markUserOnboarded(userId?: string): Promise<boolean> {
 
     const supabase = await createServerSupabaseClient()
     
-    // First, try to update existing profile
-    const { data: existingProfile, error: fetchError } = await supabase
+    // Idempotent upsert keyed by user_id
+    const { error } = await supabase
       .from('user_profiles')
-      .select('id')
-      .eq('user_id', targetUserId)
-      .single()
+      .upsert({
+        user_id: targetUserId,
+        display_name: user?.name || null,
+        avatar_url: user?.avatarUrl || null,
+        is_onboarded: true,
+        updated_at: new Date().toISOString()
+      }, { onConflict: 'user_id' })
 
-    if (existingProfile) {
-      // Profile exists, just update it
-      const { error } = await supabase
-        .from('user_profiles')
-        .update({
-          is_onboarded: true,
-          updated_at: new Date().toISOString()
-        })
-        .eq('user_id', targetUserId)
-
-      if (error) {
-        console.error('Error updating onboarding status:', error)
-        return false
-      }
-    } else {
-      // Profile doesn't exist, create it with minimal data
-      const { error } = await supabase
-        .from('user_profiles')
-        .insert({
-          user_id: targetUserId,
-          display_name: user?.name || null,
-          avatar_url: user?.avatarUrl || null,
-          is_onboarded: true,
-          updated_at: new Date().toISOString()
-        })
-
-      if (error) {
-        console.error('Error creating profile during onboarding:', error)
-        return false
-      }
+    if (error) {
+      console.error('Error upserting onboarding status:', error)
+      return false
     }
 
     return true

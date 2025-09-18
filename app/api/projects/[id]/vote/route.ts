@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server"
-import { voteProject } from "@/lib/data"
+import { getProject, voteProject } from "@/lib/data"
+import { createServerSupabaseClient } from "@/lib/supabase"
+import { getCurrentUser } from "@/lib/auth"
 
 export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -15,6 +17,31 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   }
   if (!p) {
     return NextResponse.json({ error: "Not found" }, { status: 404 })
+  }
+
+  // If vote was successful and was an upvote, create notification
+  if (p && dir === 'up') {
+    try {
+      const user = await getCurrentUser()
+      const project = await getProject(id) // Re-fetch project to get author
+      if (user && project && project.author) {
+        const supabase = await createServerSupabaseClient()
+        const { error: notificationError } = await supabase.rpc('create_notification', {
+          target_user_id: project.author.id,
+          notification_type: 'new_vote',
+          notification_data: {
+            projectId: p.id,
+            projectName: p.title,
+            voterName: user.name
+          }
+        })
+        if (notificationError) {
+          console.error('Failed to create notification for new vote:', notificationError)
+        }
+      }
+    } catch (e) {
+      console.error('Error creating vote notification:', e)
+    }
   }
   
   return NextResponse.json(p)

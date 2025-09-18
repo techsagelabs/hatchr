@@ -1,12 +1,13 @@
 import { notFound, redirect } from "next/navigation"
-// import Image from "next/image"
+import Image from "next/image"
 import Link from "next/link"
 import { getUserByUsername, listProjectsByUser, getUserStats } from "@/lib/data"
 import { ProjectCard } from "@/components/project-card"
 import { getCurrentUser } from "@/lib/auth" // use current user for fallback
 import { Navbar } from "@/components/navbar"
 import { PageTransition, CardTransition } from "@/components/page-transitions"
-import { MapPin, Calendar, ExternalLink, Github, Twitter, Linkedin, BarChart3, MessageSquare, ThumbsUp } from "lucide-react"
+import { MapPin, Calendar, ExternalLink, Github, Twitter, Linkedin, BarChart3, MessageSquare, ThumbsUp, Users } from "lucide-react"
+import { ConnectButton } from "@/components/connect-button"
 
 function slugifyName(name: string) {
   return name
@@ -51,15 +52,22 @@ export default async function UserProfilePage({ params }: { params: Promise<{ us
           {/* User Info Header */}
           <div className="mb-8">
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6">
-              <img
+              <Image
                 src={user.avatarUrl || "/placeholder.svg?height=96&width=96&query=avatar"}
                 alt={`${user.name} avatar`}
                 width={96}
                 height={96}
-                className="rounded-full ring-4 ring-orange-100 dark:ring-orange-900"
+                className="rounded-full ring-4 ring-orange-100 dark:ring-orange-900 object-cover"
+                priority={true}
+                placeholder="blur"
+                blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCdABmX/9k="
               />
               <div className="flex-1">
                 <h1 className="text-3xl font-bold tracking-tight mb-2">{user.name}</h1>
+                <div className="mt-2" id="connect-button">
+                  {/* Connect button */}
+                  <ConnectButton otherUserId={user.id} />
+                </div>
                 
                 {/* Bio */}
                 {user.bio && (
@@ -133,7 +141,7 @@ export default async function UserProfilePage({ params }: { params: Promise<{ us
             </div>
             
             {/* Stats */}
-            <div className="grid grid-cols-3 gap-4 mt-6 p-4 bg-muted/30 rounded-xl">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-6 p-4 bg-muted/30 rounded-xl">
               <div className="text-center">
                 <div className="flex items-center justify-center gap-1 text-2xl font-bold mb-1">
                   <BarChart3 className="h-5 w-5 text-orange-600" />
@@ -154,6 +162,19 @@ export default async function UserProfilePage({ params }: { params: Promise<{ us
                   {stats.totalCommentsReceived}
                 </div>
                 <div className="text-sm text-muted-foreground">Comments Received</div>
+              </div>
+              <div className="text-center">
+                <div className="flex items-center justify-center gap-1 text-2xl font-bold mb-1">
+                  <Users className="h-5 w-5 text-purple-600" />
+                  {stats.totalConnections}
+                </div>
+                <div className="text-sm text-muted-foreground">Connections</div>
+                <a 
+                  href="#connect-button"
+                  className="text-xs text-muted-foreground mt-1 hover:text-orange-600 transition-colors cursor-pointer block"
+                >
+                  → Connect to view details
+                </a>
               </div>
             </div>
           </div>
