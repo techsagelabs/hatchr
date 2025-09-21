@@ -26,7 +26,7 @@ export function SignUpPromptModal({ isOpen, onClose, action = "interact" }: Sign
         <DialogHeader>
           <DialogTitle className="flex items-center justify-center gap-2 text-2xl">
             <UserPlus className="h-6 w-6 text-orange-600" />
-            Join TechsageLabs
+            Join Hatchr
           </DialogTitle>
           <DialogDescription className="text-base py-2">
             To {action} on projects and connect with the community, 

@@ -56,6 +56,7 @@ export type Database = {
           author_avatar_url: string | null
           upvotes: number
           downvotes: number
+          net_votes: number
           comments_count: number
           created_at: string
           updated_at: string
@@ -73,6 +74,7 @@ export type Database = {
           author_avatar_url?: string | null
           upvotes?: number
           downvotes?: number
+          net_votes?: number
           comments_count?: number
           created_at?: string
           updated_at?: string
@@ -90,6 +92,7 @@ export type Database = {
           author_avatar_url?: string | null
           upvotes?: number
           downvotes?: number
+          net_votes?: number
           comments_count?: number
           created_at?: string
           updated_at?: string

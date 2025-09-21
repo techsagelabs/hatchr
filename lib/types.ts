@@ -21,7 +21,7 @@ export type Project = {
   mediaUrl?: string
   codeEmbedUrl?: string
   author: User
-  votes: { up: number; down: number }
+  votes: { up: number; down: number; net: number }
   createdAt: string
   commentsCount: number
 }

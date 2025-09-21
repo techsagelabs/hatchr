@@ -167,7 +167,7 @@ export function OnboardingModal({ isOpen, userName, userAvatar, onComplete }: On
                 <Sparkles className="h-8 w-8 text-orange-600" />
               </div>
               <DialogHeader>
-                <DialogTitle className="text-2xl">Welcome to TechsageLabs! 🎉</DialogTitle>
+                <DialogTitle className="text-2xl">Welcome to Hatchr! 🎉</DialogTitle>
                 <DialogDescription className="text-base">
                   Let's set up your profile so you can start sharing your amazing projects with the community.
                 </DialogDescription>
@@ -377,7 +377,7 @@ export function OnboardingModal({ isOpen, userName, userAvatar, onComplete }: On
               <DialogHeader>
                 <DialogTitle className="text-2xl">You're all set! 🚀</DialogTitle>
                 <DialogDescription className="text-base">
-                  Welcome to the TechsageLabs community! You can now start sharing your projects and discovering amazing builds from other makers.
+                  Welcome to the Hatchr community! You can now start sharing your projects and discovering amazing builds from other makers.
                 </DialogDescription>
               </DialogHeader>
               <p className="text-sm text-muted-foreground mt-4">

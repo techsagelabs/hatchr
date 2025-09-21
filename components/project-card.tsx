@@ -35,7 +35,7 @@ function toUsernameSlug(name?: string) {
 }
 
 export function ProjectCard({ project }: { project: ProjectWithUserVote }) {
-  const { user } = useUser()
+  const { user, isLoaded } = useUser()
   const router = useRouter()
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [reportDialogOpen, setReportDialogOpen] = useState(false)
@@ -53,7 +53,7 @@ export function ProjectCard({ project }: { project: ProjectWithUserVote }) {
   const profileHref = `/u/${toUsernameSlug(authorName)}`
   
   // Avatar is now handled at the data level (custom avatar prioritized over Clerk)
-  const isCurrentUser = user?.id === project.author.id
+  const isCurrentUser = isLoaded && user?.id === project.author.id
   const avatarUrl = project.author?.avatarUrl
 
   const handleDelete = async () => {
@@ -85,7 +85,7 @@ export function ProjectCard({ project }: { project: ProjectWithUserVote }) {
   }
 
   const handleCommentClick = () => {
-    if (!user) {
+    if (!isLoaded || !user) {
       setShowCommentSignUpModal(true)
       return
     }
@@ -115,7 +115,7 @@ export function ProjectCard({ project }: { project: ProjectWithUserVote }) {
           {/* Single unified menu */}
           <UnifiedProjectMenu 
             project={project} 
-            user={user}
+            user={isLoaded ? user : null}
             onDelete={() => setDeleteDialogOpen(true)}
             onReport={() => setReportDialogOpen(true)}
           />
@@ -162,14 +162,42 @@ export function ProjectCard({ project }: { project: ProjectWithUserVote }) {
           <div className="flex items-center gap-2">
             {/* Vote controls rendered as rounded pills */}
             <VoteControls projectId={project.id} initial={project} />
+            
+            {/* Comments button */}
             <Button 
               variant="secondary" 
-              className="h-9 rounded-full px-3 gap-2"
+              className="h-10 rounded-full px-4 gap-2 bg-muted hover:bg-muted/80 border shadow-inner"
               onClick={handleCommentClick}
             >
               <MessageSquare className="h-4 w-4" aria-hidden />
-              <span className="tabular-nums">{project.commentsCount}</span>
+              <span className="tabular-nums text-sm font-medium">{project.commentsCount}</span>
               <span className="sr-only">Comments</span>
+            </Button>
+            
+            {/* Share button */}
+            <Button 
+              variant="secondary" 
+              className="h-10 rounded-full px-4 gap-2 bg-muted hover:bg-muted/80 border shadow-inner"
+              onClick={() => {
+                if (navigator.share) {
+                  navigator.share({
+                    title: project.title,
+                    text: project.shortDescription,
+                    url: `${window.location.origin}/projects/${project.id}`,
+                  }).catch(console.error)
+                } else {
+                  navigator.clipboard.writeText(`${window.location.origin}/projects/${project.id}`)
+                    .then(() => {
+                      // You could add a toast here
+                      console.log('Link copied to clipboard!')
+                    })
+                    .catch(console.error)
+                }
+              }}
+            >
+              <Share2 className="h-4 w-4" aria-hidden />
+              <span className="text-sm font-medium">Share</span>
+              <span className="sr-only">Share project</span>
             </Button>
           </div>
         {timeAgo && <time className="text-sm text-muted-foreground">{timeAgo}</time>}

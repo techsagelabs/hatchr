@@ -27,6 +27,12 @@ const nextConfig = {
         port: '',
         pathname: '/**',
       },
+      {
+        protocol: 'https',
+        hostname: 'img.clerk.com',
+        port: '',
+        pathname: '/**',
+      },
     ],
   },
   // ✅ OPTIMIZED: Enable compiler optimizations (swcMinify is automatic in Next.js 15)

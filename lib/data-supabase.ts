@@ -62,7 +62,7 @@ async function dbProjectToProject(row: ProjectRow, supabase?: any): Promise<Proj
       name: row.author_name,
       avatarUrl: authorAvatarUrl,
     },
-    votes: { up: row.upvotes, down: row.downvotes },
+    votes: { up: row.upvotes, down: row.downvotes, net: row.net_votes },
     createdAt: row.created_at,
     commentsCount: row.comments_count,
   }

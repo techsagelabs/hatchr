@@ -1,8 +1,8 @@
-# TechsageLabs
+# Hatchr
 
 A modern Product Hunt-inspired platform for developers to showcase their projects, connect with other creators, and discover innovative builds. Built with cutting-edge web technologies for optimal performance and user experience.
 
-![TechsageLabs](https://img.shields.io/badge/TechsageLabs-Project%20Showcase%20Platform-blue)
+![Hatchr](https://img.shields.io/badge/Hatchr-Project%20Showcase%20Platform-blue)
 ![Next.js](https://img.shields.io/badge/Next.js-15.2.4-black)
 ![TypeScript](https://img.shields.io/badge/TypeScript-Enabled-blue)
 ![Clerk](https://img.shields.io/badge/Auth-Clerk-purple)

@@ -11,8 +11,8 @@ import { SWRConfigProvider } from "@/components/swr-config-provider"
 import { ClientProviders } from "@/components/client-providers"
 
 export const metadata: Metadata = {
-  title: "TechsageLabs",
-  description: "TechsageLabs community app",
+  title: "Hatchr",
+  description: "Hatchr community app",
   generator: "v0.app",
 }
 

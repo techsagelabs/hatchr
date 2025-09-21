@@ -42,8 +42,8 @@ export function Navbar() {
     <header className="sticky top-0 z-40 w-full border-b bg-background/80 backdrop-blur">
       <div className="mx-auto grid max-w-6xl grid-cols-[1fr_minmax(280px,640px)_1fr] items-center gap-3 px-4 py-3">
         <Link href="/" className="flex items-center gap-2 justify-self-start">
-          <div className="grid h-8 w-8 place-items-center rounded-md bg-orange-600 text-white font-semibold">T</div>
-          <span className="font-semibold">TechsageLabs</span>
+          <div className="grid h-8 w-8 place-items-center rounded-md bg-orange-600 text-white font-semibold">H</div>
+          <span className="font-semibold" key={`hatchr-brand-${Date.now()}`}>Hatchr</span>
         </Link>
 
         <form onSubmit={onSearch} className="hidden md:block justify-self-center w-full">

@@ -37,17 +37,20 @@ export function VoteControls({
   async function vote(dir: Exclude<VoteDirection, null>) {
     if (!data) return
     setBusy(true)
+    const newUpvotes = dir === "up"
+      ? data.votes.up + (data.userVote === "up" ? -1 : 1)
+      : data.votes.up - (data.userVote === "up" ? 1 : 0)
+    
+    const newDownvotes = dir === "down"
+      ? data.votes.down + (data.userVote === "down" ? -1 : 1)
+      : data.votes.down - (data.userVote === "down" ? 1 : 0)
+
     const optimistic: ProjectWithUserVote = {
       ...data,
       votes: {
-        up:
-          dir === "up"
-            ? data.votes.up + (data.userVote === "up" ? -1 : 1)
-            : data.votes.up - (data.userVote === "up" ? 1 : 0),
-        down:
-          dir === "down"
-            ? data.votes.down + (data.userVote === "down" ? -1 : 1)
-            : data.votes.down - (data.userVote === "down" ? 1 : 0),
+        up: newUpvotes,
+        down: newDownvotes,
+        net: newUpvotes - newDownvotes,
       },
       userVote: data.userVote === dir ? null : dir,
     }
@@ -58,9 +61,26 @@ export function VoteControls({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ direction: dir }),
       })
+      
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({ error: 'Unknown error' }))
+        console.error('Vote failed:', errorData)
+        
+        if (res.status === 401) {
+          setShowSignUpModal(true)
+          return
+        }
+        
+        throw new Error(errorData.error || `HTTP ${res.status}`)
+      }
+      
       const fresh = (await res.json()) as ProjectWithUserVote
       await mutate(fresh, false)
       await globalMutate("/api/projects")
+    } catch (error) {
+      console.error('Error voting:', error)
+      // Revert optimistic update
+      await mutate(data, false)
     } finally {
       setBusy(false)
     }
@@ -75,7 +95,7 @@ export function VoteControls({
   return (
     <>
       <div
-        className="inline-flex items-center rounded-full border bg-muted px-3 h-10 shadow-inner select-none"
+        className="inline-flex items-center rounded-full border bg-muted px-4 h-10 shadow-inner select-none"
         aria-label="Vote controls"
         role="group"
       >
@@ -93,8 +113,8 @@ export function VoteControls({
           <Triangle className={cn("h-5 w-5", "stroke-[2.5] text-black", upActive && "opacity-100")} aria-hidden />
         </button>
 
-        <span aria-live="polite" className="mx-4 text-base font-medium tabular-nums tracking-[-0.01em]">
-          {data.votes.up}
+        <span aria-live="polite" className="mx-3 text-sm font-medium tabular-nums tracking-[-0.01em]">
+          {data.votes.net}
         </span>
 
         <button
