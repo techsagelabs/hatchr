@@ -3,6 +3,7 @@ import type { Metadata } from "next"
 import { Inter } from "next/font/google"
 import { GeistMono } from "geist/font/mono"
 import { Analytics } from "@vercel/analytics/next"
+import { SpeedInsights } from "@vercel/speed-insights/next"
 import { Suspense } from "react"
 import { ClerkProvider } from "@clerk/nextjs"
 import "./globals.css"
@@ -36,6 +37,7 @@ export default function RootLayout({
               <ClientProviders>
                 <Suspense fallback={null}>{children}</Suspense>
                 <Analytics />
+                <SpeedInsights />
               </ClientProviders>
             </SWRConfigProvider>
           </ThemeProvider>
