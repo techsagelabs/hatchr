@@ -2,7 +2,6 @@
   "name": "hatchr",
   "version": "0.1.0",
   "private": true,
-  "packageManager": "pnpm@10.15.1",
   "scripts": {
     "build": "next build",
     "dev": "next dev",
@@ -78,14 +77,8 @@
     "tw-animate-css": "1.3.3",
     "typescript": "^5"
   },
-  "pnpm": {
-    "overrides": {
-      "vaul>react": "^19",
-      "vaul>react-dom": "^19",
-      "react-day-picker>react": "^19", 
-      "react-day-picker>react-dom": "^19",
-      "embla-carousel-react>react": "^19",
-      "embla-carousel-react>react-dom": "^19"
-    }
+  "overrides": {
+    "react": "^19",
+    "react-dom": "^19"
   }
 }
