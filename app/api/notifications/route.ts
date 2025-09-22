@@ -5,10 +5,20 @@ import { getUserProfile } from "@/lib/user-profiles"
 
 export async function GET() {
   try {
+    // Debug environment variables in production
+    console.log('Environment check:', {
+      hasSupabaseUrl: !!process.env.NEXT_PUBLIC_SUPABASE_URL,
+      hasSupabaseKey: !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+      hasServiceKey: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
+      hasClerkKey: !!process.env.CLERK_SECRET_KEY,
+    })
+
     const user = await getCurrentUser()
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
+
+    console.log('User authenticated:', user.id)
 
     const supabase = await createServerSupabaseClient()
     const { data: notifications, error } = await supabase
@@ -17,8 +27,12 @@ export async function GET() {
       .order('created_at', { ascending: false })
 
     if (error) {
-      console.error('Error fetching notifications:', error)
-      return NextResponse.json({ error: "Failed to fetch notifications" }, { status: 500 })
+      console.error('Supabase error fetching notifications:', error)
+      return NextResponse.json({ 
+        error: "Failed to fetch notifications",
+        details: error.message,
+        code: error.code
+      }, { status: 500 })
     }
 
     // Enhance notifications with actor details
@@ -42,7 +56,11 @@ export async function GET() {
     return NextResponse.json(enhancedNotifications)
   } catch (error) {
     console.error('GET /api/notifications error:', error)
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
+    console.error('Error stack:', error instanceof Error ? error.stack : 'No stack trace')
+    return NextResponse.json({ 
+      error: "Internal server error",
+      details: error instanceof Error ? error.message : 'Unknown error'
+    }, { status: 500 })
   }
 }
 

@@ -11,7 +11,18 @@ import useSWR, { useSWRConfig } from 'swr'
 import { useState } from "react"
 import { toast } from "@/hooks/use-toast"
 
-const fetcher = (url: string) => fetch(url).then(res => res.json())
+const fetcher = async (url: string) => {
+  const res = await fetch(url)
+  const data = await res.json()
+  
+  // If API returns error, throw to trigger SWR error state
+  if (!res.ok || data.error) {
+    throw new Error(data.error || `API Error: ${res.status}`)
+  }
+  
+  // Ensure we always return an array
+  return Array.isArray(data) ? data : []
+}
 
 // Connection actions for the full notifications page
 function NotificationConnectActions({ notificationId, otherUserId }: { notificationId: string, otherUserId: string }) {
@@ -113,7 +124,7 @@ function NotificationItem({ notification }: { notification: any }) {
 
 export default function NotificationsPage() {
     const { isSignedIn } = useUser()
-    const { data: notifications } = useSWR(isSignedIn ? '/api/notifications' : null, fetcher)
+    const { data: notifications, error } = useSWR(isSignedIn ? '/api/notifications' : null, fetcher)
 
     if (!isSignedIn) {
         return (
@@ -135,7 +146,12 @@ export default function NotificationsPage() {
                 <section className="mx-auto max-w-3xl px-6 py-6">
                     <h1 className="text-2xl font-bold mb-6">Notifications</h1>
                     <div className="bg-card border rounded-xl divide-y">
-                        {!notifications ? (
+                        {error ? (
+                            <div className="p-6 text-center">
+                                <p className="text-muted-foreground mb-2">Unable to load notifications.</p>
+                                <p className="text-sm text-red-600">Please check your connection and try again.</p>
+                            </div>
+                        ) : !notifications ? (
                             <p className="p-6 text-center text-muted-foreground">Loading...</p>
                         ) : notifications.length === 0 ? (
                             <p className="p-6 text-center text-muted-foreground">No notifications yet.</p>

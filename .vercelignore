@@ -1,0 +1,41 @@
+# Build artifacts
+.next/
+out/
+build/
+
+# Dependencies
+node_modules/
+pnpm-lock.yaml
+yarn.lock
+package-lock.json
+
+# Environment files
+.env*
+
+# Git
+.git/
+
+# Development files
+*.log
+*.tsbuildinfo
+
+# Documentation and SQL files (not needed in production)
+*.md
+*.sql
+SETUP_CHECKLIST.md
+SUPABASE_SETUP.md
+FEATURE_SUMMARY.md
+SWITCH_TO_MODAL_MODE_GUIDE.md
+CLERK_CONFIG_FIX.md
+CLERK_CURRENT_PATHS_GUIDE.md
+CLERK_DEDICATED_PAGES_FIX.md
+
+# Temp and analysis files
+analyze-bundle.js
+temp-*
+
+# Large reference images (use optimized versions)
+public/reference/
+
+# Design files
+design/

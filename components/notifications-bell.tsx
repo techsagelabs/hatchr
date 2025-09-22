@@ -13,7 +13,18 @@ import { toast } from "@/hooks/use-toast"
 import { ConnectButton } from "./connect-button"
 import { timeAgo } from "@/lib/utils"
 
-const fetcher = (url: string) => fetch(url).then(res => res.json())
+const fetcher = async (url: string) => {
+  const res = await fetch(url)
+  const data = await res.json()
+  
+  // If API returns error, throw to trigger SWR error state
+  if (!res.ok || data.error) {
+    throw new Error(data.error || `API Error: ${res.status}`)
+  }
+  
+  // Ensure we always return an array
+  return Array.isArray(data) ? data : []
+}
 
 // A simplified ConnectButton just for notifications
 function NotificationConnectActions({ notificationId, otherUserId }: { notificationId: string, otherUserId: string }) {
@@ -111,36 +122,53 @@ function NotificationItem({ notification, onRead }: { notification: any, onRead:
 
 export function NotificationsBell() {
     const { isSignedIn } = useUser()
-    const { data: notifications, mutate } = useSWR(isSignedIn ? '/api/notifications' : null, fetcher)
+    const { data: notifications, error, mutate } = useSWR(isSignedIn ? '/api/notifications' : null, fetcher)
     const [isOpen, setIsOpen] = useState(false)
 
     if (!isSignedIn) return null
 
-    const unreadCount = notifications?.filter((n: any) => !n.is_read).length ?? 0
+    // Handle loading and error states gracefully
+    const safeNotifications = notifications || []
+    const unreadCount = safeNotifications.filter((n: any) => !n.is_read).length ?? 0
+    
+    // If there's an error, show the bell but don't show error to user (graceful degradation)
+    if (error) {
+        console.error('Notifications API error:', error)
+    }
 
     const handleOpenChange = async (open: boolean) => {
         setIsOpen(open)
-        if (!open && unreadCount > 0) {
+        if (!open && unreadCount > 0 && !error) {
             // Mark all visible unread notifications as read when closing
-            const unreadIds = notifications.filter((n: any) => !n.is_read).map((n: any) => n.id)
-            await fetch('/api/notifications', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ ids: unreadIds })
-            })
-            mutate() // Re-fetch to update UI
+            try {
+                const unreadIds = safeNotifications.filter((n: any) => !n.is_read).map((n: any) => n.id)
+                await fetch('/api/notifications', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ ids: unreadIds })
+                })
+                mutate() // Re-fetch to update UI
+            } catch (err) {
+                console.error('Failed to mark notifications as read:', err)
+            }
         }
     }
     
     const handleNotificationClick = async (id: string) => {
-        const notification = notifications.find((n: any) => n.id === id)
-        if (notification && !notification.is_read) {
-            await fetch('/api/notifications', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ ids: [id] })
-            })
-            mutate()
+        if (error) return // Don't try to mark as read if there's an API error
+        
+        try {
+            const notification = safeNotifications.find((n: any) => n.id === id)
+            if (notification && !notification.is_read) {
+                await fetch('/api/notifications', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ ids: [id] })
+                })
+                mutate()
+            }
+        } catch (err) {
+            console.error('Failed to mark notification as read:', err)
         }
     }
 
@@ -162,15 +190,17 @@ export function NotificationsBell() {
                 </div>
                 <Separator />
                 <div className="max-h-96 overflow-y-auto">
-                    {notifications && notifications.length > 0 ? (
-                        (notifications as any[]).slice(0, 4).map((n: any) => (
+                    {error ? (
+                        <p className="p-4 text-sm text-muted-foreground">Unable to load notifications.</p>
+                    ) : safeNotifications.length > 0 ? (
+                        safeNotifications.slice(0, 4).map((n: any) => (
                             <NotificationItem key={n.id} notification={n} onRead={handleNotificationClick} />
                         ))
                     ) : (
                         <p className="p-4 text-sm text-muted-foreground">No new notifications.</p>
                     )}
                 </div>
-                {notifications && notifications.length > 4 && (
+                {!error && safeNotifications.length > 4 && (
                     <div className="p-2 border-t text-center">
                         <Link href="/notifications">
                             <Button variant="ghost" className="w-full">Show more</Button>
