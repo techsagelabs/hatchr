@@ -265,9 +265,12 @@ async function getUserStatsLegacy(userId: string): Promise<{
 
 export async function listProjects(): Promise<ProjectWithUserVote[]> {
   try {
-    const supabase = await createServerSupabaseClient()
     const user = await getCurrentUser()
     const userId = user?.id || "anonymous"
+    
+    console.log('🔍 listProjects called for user:', { userId, isAuthenticated: !!user })
+    
+    const supabase = await createServerSupabaseClient()
 
     // Get projects with vote information
     const { data: projects, error: projectsError } = await supabase
@@ -282,7 +285,13 @@ export async function listProjects(): Promise<ProjectWithUserVote[]> {
       .order('upvotes', { ascending: false })
 
     if (projectsError) {
-      console.error('Error fetching projects:', projectsError)
+      console.error('❌ Error fetching projects:', {
+        error: projectsError.message,
+        code: projectsError.code,
+        details: projectsError.details,
+        userId,
+        isAuthenticated: !!user
+      })
       return []
     }
 

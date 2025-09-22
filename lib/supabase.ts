@@ -11,21 +11,35 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey)
 export async function createServerSupabaseClient() {
   const { getToken, userId } = await auth()
   
+  console.log('🔍 createServerSupabaseClient called:', { 
+    hasUserId: !!userId, 
+    userId: userId ? `${userId.substring(0, 8)}...` : null 
+  })
+  
   // Only try to get token if user is authenticated
   let token = null
   if (userId) {
     try {
       token = await getToken({ template: 'supabase' })
+      console.log('✅ JWT token obtained:', { 
+        hasToken: !!token, 
+        tokenStart: token ? `${token.substring(0, 20)}...` : null 
+      })
     } catch (error) {
-      console.log('⚠️ Could not get JWT token (user might be signing in):', error)
+      console.error('❌ Could not get JWT token:', {
+        error: error instanceof Error ? error.message : error,
+        userId: userId.substring(0, 8) + '...'
+      })
+      // FALLBACK: Use anonymous access if JWT fails
+      console.log('🔄 Falling back to anonymous access due to JWT error')
     }
   }
 
-  // Debug: Log token info (remove in production)
+  // Debug: Log token info
   if (token) {
     console.log('🔑 Using Clerk JWT token for Supabase')
   } else if (userId) {
-    console.log('⚠️ User authenticated but no JWT token available')
+    console.log('⚠️ User authenticated but using anonymous access (JWT failed)')
   } else {
     // This is normal for unauthenticated users browsing publicly
     console.log('👤 Unauthenticated user accessing public data')
