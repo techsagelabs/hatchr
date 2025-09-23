@@ -1,5 +1,5 @@
--- Real-time Performance Optimization for Hatchr
--- Run this in your Supabase SQL Editor
+-- CORRECTED Real-time Optimization for Hatchr
+-- Run this in your Supabase SQL Editor (FIXED version)
 
 -- 1. OPTIMIZED INDEXES for better real-time performance
 -- These indexes will speed up the real-time queries significantly
@@ -24,7 +24,7 @@ CREATE INDEX IF NOT EXISTS idx_connections_requester_id_status ON public.connect
 CREATE INDEX IF NOT EXISTS idx_connections_recipient_id_status ON public.connections(recipient_id, status);
 CREATE INDEX IF NOT EXISTS idx_connections_created_at_desc ON public.connections(created_at DESC);
 
--- Notifications indexes for real-time notification updates
+-- ✅ FIXED: Notifications indexes (using correct column name 'user_id')
 CREATE INDEX IF NOT EXISTS idx_notifications_user_id_read ON public.notifications(user_id, is_read);
 CREATE INDEX IF NOT EXISTS idx_notifications_user_id_created_at ON public.notifications(user_id, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_notifications_type_created_at ON public.notifications(type, created_at DESC);
@@ -191,14 +191,14 @@ CREATE TRIGGER trigger_update_project_comment_counts_delete
 
 -- 6. VERIFY real-time is working
 -- Run this to test real-time functionality
-SELECT 'Real-time optimization complete!' as status;
+SELECT 'Real-time optimization complete! ✅' as status;
 
 -- Check which tables are enabled for real-time
 SELECT schemaname, tablename 
 FROM pg_publication_tables 
 WHERE pubname = 'supabase_realtime';
 
--- Show index information
+-- Show index information for verification
 SELECT 
   indexname, 
   tablename, 

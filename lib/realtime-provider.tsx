@@ -100,7 +100,7 @@ export function RealtimeProvider({ children }: RealtimeProviderProps) {
         event: '*',
         schema: 'public',
         table: 'notifications',
-        filter: `recipient_id=eq.${user?.id}`
+        filter: `user_id=eq.${user?.id}`
       }, (payload) => {
         console.log('🔔 Notification update:', payload)
         
