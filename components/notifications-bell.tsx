@@ -73,10 +73,10 @@ function NotificationConnectActions({ notificationId, otherUserId }: { notificat
 }
 
 function NotificationItem({ notification, onRead }: { notification: any, onRead: (id: string) => void }) {
-    const actorName = notification.actor?.name || 'Someone'
+    const actorName = notification.actor?.username || 'Someone'
     const linkUrl = notification.type === 'new_comment' || notification.type === 'new_vote'
         ? `/projects/${notification.data?.projectId}`
-        : `/u/${notification.actor?.name}` // Fallback for connection notifications
+        : `/u/${notification.actor?.username}` // Fallback for connection notifications
 
     let message = ''
     switch (notification.type) {

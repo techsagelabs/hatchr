@@ -20,7 +20,7 @@ export async function GET() {
     if (!profile) {
       const newProfile = await createOrUpdateUserProfile(
         user.id, 
-        user.name, 
+        user.username, 
         user.avatarUrl
       )
       return NextResponse.json(newProfile)

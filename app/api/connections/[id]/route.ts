@@ -31,7 +31,7 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
         notification_type: 'connection_accepted',
         notification_data: {
           connectionId: data.id,
-          recipientName: user.name
+          recipientName: user.username
         }
       })
       if (notificationError) {

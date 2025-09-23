@@ -34,7 +34,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
           notification_data: {
             projectId: project.id,
             projectName: project.title,
-            commenterName: user.name,
+            commenterName: user.username,
             commentId: c.id
           }
         })

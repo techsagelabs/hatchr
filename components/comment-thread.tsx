@@ -54,13 +54,13 @@ function CommentItem({
         <Avatar className="h-8 w-8">
           <AvatarImage
             src={node.author.avatarUrl || "/placeholder.svg?height=32&width=32&query=avatar"}
-            alt={`${node.author.name} avatar`}
+            alt={`${node.author.username} avatar`}
           />
-          <AvatarFallback>{node.author.name.slice(0, 1)}</AvatarFallback>
+          <AvatarFallback>{node.author.username.slice(0, 1)}</AvatarFallback>
         </Avatar>
         <div className="flex-1">
           <div className="text-sm">
-            <span className="font-medium">{node.author.name}</span>
+            <span className="font-medium">{node.author.username}</span>
           </div>
           <p className="mt-1 text-sm leading-relaxed">{node.content}</p>
           <div className="mt-2">

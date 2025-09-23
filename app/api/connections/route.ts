@@ -61,7 +61,7 @@ export async function POST(req: Request) {
         notification_type: 'connection_request',
         notification_data: { 
           connectionId: data.id,
-          requesterName: user.name 
+          requesterName: user.username 
         }
       })
       if (notificationError) {

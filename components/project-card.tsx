@@ -49,7 +49,7 @@ export function ProjectCard({ project }: { project: ProjectWithUserVote }) {
   const videoUrl = anyProject?.videoUrl
   const mediaSrc = anyProject?.mediaUrl || project.thumbnailUrl
 
-  const authorName = project.author?.name || "username"
+  const authorName = project.author?.username || "username"
   const profileHref = `/u/${toUsernameSlug(authorName)}`
   
   // Avatar is now handled at the data level (custom avatar prioritized over Clerk)

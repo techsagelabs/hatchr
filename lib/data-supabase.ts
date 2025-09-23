@@ -60,7 +60,7 @@ async function dbProjectToProject(row: ProjectRow, supabase?: any): Promise<Proj
     codeEmbedUrl: row.code_embed_url || undefined,
     author: {
       id: row.author_id,
-      name: row.author_name,
+      username: row.author_name,
       avatarUrl: authorAvatarUrl,
     },
     votes: { up: row.upvotes, down: row.downvotes, net: row.net_votes },
@@ -83,7 +83,7 @@ async function dbCommentToComment(row: CommentRow, supabase?: any): Promise<Comm
     projectId: row.project_id,
     author: {
       id: row.author_id,
-      name: row.author_name,
+      username: row.author_name,
       avatarUrl: authorAvatarUrl,
     },
     content: row.content,
@@ -369,7 +369,7 @@ export async function createProject(input: {
       return null
     }
 
-    console.log('Creating project for user:', { userId: user.id, userName: user.name })
+    console.log('Creating project for user:', { userId: user.id, userName: user.username })
 
     const supabase = await createServerSupabaseClient()
 
@@ -381,7 +381,7 @@ export async function createProject(input: {
       media_url: input.mediaUrl || null,
       code_embed_url: input.codeEmbedUrl || null,
       author_id: user.id,
-      author_name: user.name,
+      author_name: user.username,
       author_avatar_url: user.avatarUrl || null,
     }
 
@@ -520,7 +520,7 @@ export async function addComment(projectId: string, content: string, parentId?: 
     .insert({
       project_id: projectId,
       author_id: user.id,
-      author_name: user.name,
+      author_name: user.username,
       author_avatar_url: user.avatarUrl || null,
       content,
       parent_id: parentId || null,

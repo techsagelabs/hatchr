@@ -38,7 +38,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
             notification_data: {
               projectId: p.id,
               projectName: p.title,
-              voterName: user.name
+              voterName: user.username
             }
           })
           if (notificationError) {
