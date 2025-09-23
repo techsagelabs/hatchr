@@ -70,9 +70,17 @@ export function VoteControls({
       
       if (!res.ok) {
         const errorData = await res.json().catch(() => ({ error: 'Unknown error' }))
-        console.error('Vote failed:', errorData)
+        console.error('🚨 VOTE FAILED - Full error details:', {
+          status: res.status,
+          statusText: res.statusText,
+          errorData,
+          projectId,
+          direction: dir,
+          timestamp: new Date().toISOString()
+        })
         
         if (res.status === 401) {
+          console.log('🔐 Vote failed with 401 - showing sign up modal')
           setShowSignUpModal(true)
           return
         }

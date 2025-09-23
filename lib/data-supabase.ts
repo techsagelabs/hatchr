@@ -424,45 +424,88 @@ export async function createProject(input: {
 export async function voteProject(id: string, dir: Exclude<VoteDirection, null>): Promise<ProjectWithUserVote | null> {
   const user = await getCurrentUser()
   if (!user) {
+    console.log('❌ voteProject - No user authenticated')
     return null
   }
+
+  console.log('🗳️ voteProject - Starting vote operation:', { 
+    projectId: id, 
+    direction: dir, 
+    userId: user.id,
+    userName: user.username 
+  })
 
   const supabase = await createServerSupabaseClient()
 
   // Check for existing vote
-  const { data: existingVote } = await supabase
+  console.log('🔍 voteProject - Checking for existing vote')
+  const { data: existingVote, error: selectError } = await supabase
     .from('votes')
     .select('*')
     .eq('project_id', id)
     .eq('user_id', user.id)
     .single()
 
+  if (selectError && selectError.code !== 'PGRST116') {
+    console.error('❌ voteProject - Error checking existing vote:', {
+      error: selectError.message,
+      code: selectError.code,
+      details: selectError.details,
+      hint: selectError.hint
+    })
+  }
+  
+  console.log('📊 voteProject - Existing vote check result:', { 
+    hasExistingVote: !!existingVote,
+    existingVoteType: existingVote?.vote_type 
+  })
+
   if (existingVote) {
     if (existingVote.vote_type === dir) {
       // Remove vote if clicking the same direction
+      console.log('🗑️ voteProject - Removing existing vote (same direction)')
       const { error } = await supabase
         .from('votes')
         .delete()
         .eq('id', existingVote.id)
 
       if (error) {
-        console.error('Error removing vote:', error)
+        console.error('❌ voteProject - Error removing vote:', {
+          error: error.message,
+          code: error.code,
+          details: error.details,
+          hint: error.hint,
+          voteId: existingVote.id
+        })
         return null
       }
+      console.log('✅ voteProject - Vote removed successfully')
     } else {
       // Update vote if clicking different direction
+      console.log('🔄 voteProject - Updating vote direction:', { 
+        from: existingVote.vote_type, 
+        to: dir 
+      })
       const { error } = await supabase
         .from('votes')
         .update({ vote_type: dir })
         .eq('id', existingVote.id)
 
       if (error) {
-        console.error('Error updating vote:', error)
+        console.error('❌ voteProject - Error updating vote:', {
+          error: error.message,
+          code: error.code,
+          details: error.details,
+          hint: error.hint,
+          voteId: existingVote.id
+        })
         return null
       }
+      console.log('✅ voteProject - Vote updated successfully')
     }
   } else {
     // Create new vote
+    console.log('➕ voteProject - Creating new vote')
     const { error } = await supabase
       .from('votes')
       .insert({
@@ -472,9 +515,16 @@ export async function voteProject(id: string, dir: Exclude<VoteDirection, null>)
       })
 
     if (error) {
-      console.error('Error creating vote:', error)
+      console.error('❌ voteProject - Error creating vote:', {
+        error: error.message,
+        code: error.code,
+        details: error.details,
+        hint: error.hint,
+        insertData: { project_id: id, user_id: user.id, vote_type: dir }
+      })
       return null
     }
+    console.log('✅ voteProject - New vote created successfully')
   }
 
   // Return updated project

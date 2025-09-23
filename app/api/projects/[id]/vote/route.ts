@@ -14,13 +14,26 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
 
     // Check authentication first
     const user = await getCurrentUser()
+    console.log('🔍 Vote API - User check:', { 
+      hasUser: !!user, 
+      userId: user?.id,
+      userName: user?.username 
+    })
+    
     if (!user) {
+      console.log('❌ Vote API - No user found, returning 401')
       return NextResponse.json({ error: "Authentication required" }, { status: 401 })
     }
     
+    console.log('🗳️ Vote API - Attempting vote:', { projectId: id, direction: dir, userId: user.id })
     const p = await voteProject(id, dir)
+    
     if (p === null) {
-      return NextResponse.json({ error: "Unauthorized or invalid vote" }, { status: 401 })
+      console.log('❌ Vote API - voteProject returned null (RLS or database error)')
+      return NextResponse.json({ 
+        error: "Vote failed - check server logs for RLS policy issues",
+        details: "This is usually caused by Row Level Security policies blocking the vote operation"
+      }, { status: 500 })
     }
     if (!p) {
       return NextResponse.json({ error: "Project not found" }, { status: 404 })
