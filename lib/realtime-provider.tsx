@@ -35,8 +35,17 @@ export function RealtimeProvider({ children }: RealtimeProviderProps) {
     console.log('🔄 Setting up real-time subscriptions...')
     setConnectionStatus('connecting')
 
+    // Declare channels outside try block for cleanup access
+    let votesChannel: any = null
+    let commentsChannel: any = null
+    let notificationsChannel: any = null
+    let connectionsChannel: any = null
+    let projectsChannel: any = null
+
+    try {
+
     // 1. VOTES REAL-TIME - Fix voting sync issues
-    const votesChannel = supabase
+    votesChannel = supabase
       .channel('public:votes')
       .on('postgres_changes', {
         event: '*',
@@ -56,10 +65,15 @@ export function RealtimeProvider({ children }: RealtimeProviderProps) {
       })
       .subscribe((status) => {
         console.log('Votes subscription status:', status)
+        if (status === 'SUBSCRIBED') {
+          setConnectionStatus('connected')
+        } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+          setConnectionStatus('disconnected')
+        }
       })
 
     // 2. COMMENTS REAL-TIME - Fix comment sync issues  
-    const commentsChannel = supabase
+    commentsChannel = supabase
       .channel('public:comments')
       .on('postgres_changes', {
         event: '*',
@@ -94,7 +108,7 @@ export function RealtimeProvider({ children }: RealtimeProviderProps) {
       })
 
     // 3. NOTIFICATIONS REAL-TIME - Fix notification sync issues
-    const notificationsChannel = supabase
+    notificationsChannel = supabase
       .channel('public:notifications')
       .on('postgres_changes', {
         event: '*',
@@ -140,7 +154,7 @@ export function RealtimeProvider({ children }: RealtimeProviderProps) {
       })
 
     // 4. CONNECTIONS REAL-TIME - Fix connection sync issues
-    const connectionsChannel = supabase
+    connectionsChannel = supabase
       .channel('public:connections')
       .on('postgres_changes', {
         event: '*',
@@ -172,7 +186,7 @@ export function RealtimeProvider({ children }: RealtimeProviderProps) {
       })
 
     // 5. PROJECTS REAL-TIME - For new project submissions
-    const projectsChannel = supabase
+    projectsChannel = supabase
       .channel('public:projects')
       .on('postgres_changes', {
         event: 'INSERT',
@@ -199,25 +213,27 @@ export function RealtimeProvider({ children }: RealtimeProviderProps) {
         }
       })
 
-    // Monitor overall connection status
-    supabase.realtime.onOpen(() => {
-      console.log('✅ Supabase realtime connected')
-      setConnectionStatus('connected')
-    })
+    // Monitor overall connection status through channel subscriptions
+    // Note: Individual channel subscription status will set the overall status
 
-    supabase.realtime.onClose(() => {
-      console.log('❌ Supabase realtime disconnected')
+    } catch (error) {
+      console.error('❌ Error setting up real-time subscriptions:', error)
       setConnectionStatus('disconnected')
-    })
+      // Don't throw the error, just log it and continue without real-time
+    }
 
     // Cleanup subscriptions on unmount
     return () => {
       console.log('🧹 Cleaning up real-time subscriptions')
-      votesChannel.unsubscribe()
-      commentsChannel.unsubscribe()
-      notificationsChannel.unsubscribe()
-      connectionsChannel.unsubscribe()
-      projectsChannel.unsubscribe()
+      try {
+        votesChannel?.unsubscribe()
+        commentsChannel?.unsubscribe()
+        notificationsChannel?.unsubscribe()
+        connectionsChannel?.unsubscribe()
+        projectsChannel?.unsubscribe()
+      } catch (error) {
+        console.error('Error cleaning up subscriptions:', error)
+      }
     }
   }, [isSignedIn, user?.id, mutate])
 
