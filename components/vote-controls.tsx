@@ -16,7 +16,7 @@ export function VoteControls({
   projectId: string
   initial: ProjectWithUserVote
 }) {
-  const { user } = useUser()
+  const { user, isLoaded } = useUser()
   const { data, mutate } = useSWR<ProjectWithUserVote>(`/api/projects/${projectId}`, fetcher, {
     fallbackData: initial,
   })
@@ -24,6 +24,12 @@ export function VoteControls({
   const [showSignUpModal, setShowSignUpModal] = useState(false)
 
   function handleVoteClick(dir: Exclude<VoteDirection, null>) {
+    // Wait for Clerk to load before checking authentication
+    if (!isLoaded) {
+      console.log('Clerk not loaded yet, please wait...')
+      return
+    }
+    
     // Check if user is authenticated
     if (!user) {
       setShowSignUpModal(true)
@@ -88,9 +94,9 @@ export function VoteControls({
 
   if (!data) return null
 
-  // Only show user's vote state if they are authenticated
-  const upActive = user ? data.userVote === "up" : false
-  const downActive = user ? data.userVote === "down" : false
+  // Only show user's vote state if they are authenticated and Clerk is loaded
+  const upActive = (isLoaded && user) ? data.userVote === "up" : false
+  const downActive = (isLoaded && user) ? data.userVote === "down" : false
 
   return (
     <>
