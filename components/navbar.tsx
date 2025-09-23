@@ -10,6 +10,7 @@ import { ModeToggle } from "@/components/mode-toggle"
 import { SignInButton, SignUpButton, SignedIn, SignedOut, useUser } from "@clerk/nextjs"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import dynamic from "next/dynamic"
+import { RealtimeStatus } from "./realtime-status"
 
 // ✅ OPTIMIZED: Lazy load notifications component (heavy with SWR, modals)
 const NotificationsBell = dynamic(() => import("./notifications-bell").then(mod => ({ default: mod.NotificationsBell })), {
@@ -111,6 +112,7 @@ export function Navbar() {
           />
         </form>
       </div>
+      <RealtimeStatus />
     </header>
   )
 }

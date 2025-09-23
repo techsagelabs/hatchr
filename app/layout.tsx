@@ -10,6 +10,7 @@ import "./globals.css"
 import { ThemeProvider } from "@/components/theme-provider"
 import { SWRConfigProvider } from "@/components/swr-config-provider"
 import { ClientProviders } from "@/components/client-providers"
+import { RealtimeProvider } from "@/lib/realtime-provider"
 
 export const metadata: Metadata = {
   title: "Hatchr",
@@ -34,11 +35,13 @@ export default function RootLayout({
         <body className="min-h-screen bg-background font-sans tracking-[-0.01em] text-foreground" suppressHydrationWarning>
           <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
             <SWRConfigProvider>
-              <ClientProviders>
-                <Suspense fallback={null}>{children}</Suspense>
-                <Analytics />
-                <SpeedInsights />
-              </ClientProviders>
+              <RealtimeProvider>
+                <ClientProviders>
+                  <Suspense fallback={null}>{children}</Suspense>
+                  <Analytics />
+                  <SpeedInsights />
+                </ClientProviders>
+              </RealtimeProvider>
             </SWRConfigProvider>
           </ThemeProvider>
         </body>

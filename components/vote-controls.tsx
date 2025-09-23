@@ -76,7 +76,7 @@ export function VoteControls({
       
       const fresh = (await res.json()) as ProjectWithUserVote
       await mutate(fresh, false)
-      await globalMutate("/api/projects")
+      // Real-time subscriptions will handle global updates automatically
     } catch (error) {
       console.error('Error voting:', error)
       // Revert optimistic update

@@ -109,7 +109,8 @@ export function CommentThread({ projectId }: { projectId: string }) {
     })
     if (res.ok) {
       setContent("")
-      mutate()
+      // Real-time subscriptions will update comments automatically
+      // mutate() call removed to prevent double updates
     }
   }
 
@@ -133,7 +134,9 @@ export function CommentThread({ projectId }: { projectId: string }) {
       </div>
       <ul className="mt-6">
         {tree.map((c) => (
-          <CommentItem key={c.id} node={c} projectId={projectId} onReplied={() => mutate()} />
+          <CommentItem key={c.id} node={c} projectId={projectId} onReplied={() => {
+            // Real-time subscriptions will handle comment updates automatically
+          }} />
         ))}
       </ul>
     </section>

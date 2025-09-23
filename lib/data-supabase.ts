@@ -1,5 +1,6 @@
 import { getCurrentUser } from "./auth"
-import { createServerSupabaseClient, type Database } from "./supabase"
+import { createClient as createServerSupabaseClient } from '@/utils/supabase/server'
+import { type Database } from "./supabase"
 import type { Comment, Project, ProjectWithUserVote, User, VoteDirection } from "./types"
 
 type ProjectRow = Database['public']['Tables']['projects']['Row']
@@ -279,7 +280,7 @@ export async function listProjects(): Promise<ProjectWithUserVote[]> {
           vote_type
         )
       `)
-      .order('upvotes', { ascending: false })
+      .order('net_votes', { ascending: false })
 
     if (projectsError) {
       console.error('Error fetching projects:', projectsError)
