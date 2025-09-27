@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server"
 import { getProject, voteProject } from "@/lib/data"
-import { createServerSupabaseClient } from "@/lib/supabase"
+import { createClient as createServerSupabaseClient } from "@/utils/supabase/server"
 import { getCurrentUser } from "@/lib/auth"
 
 export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {

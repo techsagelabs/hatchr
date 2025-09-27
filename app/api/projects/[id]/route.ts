@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server"
 import { getProject } from "@/lib/data"
 import { getCurrentUser } from "@/lib/auth"
-import { createServerSupabaseClient } from "@/lib/supabase"
+import { createClient as createServerSupabaseClient } from "@/utils/supabase/server"
 
 export async function GET(_: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params

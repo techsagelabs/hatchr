@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server"
 import { addComment, listComments, getProject } from "@/lib/data"
-import { createServerSupabaseClient } from "@/lib/supabase"
+import { createClient as createServerSupabaseClient } from "@/utils/supabase/server"
 import { getCurrentUser } from "@/lib/auth"
 
 

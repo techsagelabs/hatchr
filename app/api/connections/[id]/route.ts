@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server"
 import { getCurrentUser } from "@/lib/auth"
-import { createServerSupabaseClient } from "@/lib/supabase"
+import { createClient as createServerSupabaseClient } from "@/utils/supabase/server"
 
 // PUT /api/connections/:id  body: { status: 'accepted' | 'declined' }
 export async function PUT(req: Request, { params }: { params: Promise<{ id: string }> }) {
