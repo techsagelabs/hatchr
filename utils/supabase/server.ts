@@ -27,27 +27,50 @@ export async function createClient() {
         },
       },
       global: {
-        headers: async () => {
+        // Switch to custom fetch so Authorization is guaranteed to be attached
+        fetch: async (url: RequestInfo, options: RequestInit = {}) => {
           if (!userId) {
-            console.log('👤 No user - using anonymous access')
-            return {}
+            return fetch(url, options)
           }
 
           try {
             console.log('🔍 Getting Clerk token for SSR request')
-            // ✅ NATIVE INTEGRATION: Use getToken() without template parameter
-            const token = await getToken()
-            
-            if (token) {
-              console.log('🔑 Successfully got Clerk token for Supabase SSR')
-              return { Authorization: `Bearer ${token}` }
-            } else {
-              console.log('⚠️ No token received from Clerk in SSR')
-              return {}
+            const preferTemplate = (process.env.NEXT_PUBLIC_CLERK_SUPABASE_USE_TEMPLATE_FIRST || '').toLowerCase() === 'true'
+            const templateName = process.env.NEXT_PUBLIC_CLERK_SUPABASE_TEMPLATE || 'supabase'
+
+            let token: string | null = null
+            if (preferTemplate) {
+              try {
+                console.log(`🔐 Preferring Clerk JWT template first: ${templateName}`)
+                token = await getToken({ template: templateName })
+              } catch (e) {
+                console.log('⚠️ Template token retrieval failed, will try native token next:', e)
+              }
             }
+
+            // ✅ Try native token (RS256) if no template token or not preferring template
+            if (!token) {
+              token = await getToken()
+            }
+            // 🔁 Fallback to legacy JWT template (HS256) if native token is unavailable or Supabase not configured
+            // 🔁 Final fallback to template if native returned null
+            if (!token) {
+              console.log(`🔁 Final fallback to Clerk JWT template: ${templateName}`)
+              try {
+                token = await getToken({ template: templateName })
+              } catch (e) {
+                console.log('⚠️ Final fallback template token retrieval failed:', e)
+              }
+            }
+
+            if (token) {
+              const headers = new Headers(options.headers as HeadersInit | undefined)
+              headers.set('Authorization', `Bearer ${token}`)
+              return fetch(url, { ...options, headers })
+            }
+            return fetch(url, options)
           } catch (error) {
-            console.log('❌ Error getting Clerk token in SSR:', error)
-            return {}
+            return fetch(url, options)
           }
         }
       }

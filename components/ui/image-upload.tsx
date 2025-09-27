@@ -30,8 +30,16 @@ export function ImageUpload({ value, onChange, disabled, label = "Image", requir
       setUploading(true)
       setError(null)
 
-      // Get auth token for Supabase
-      const token = await getToken({ template: 'supabase' })
+      // Get auth token for Supabase (native Clerk integration first, then fallback to template)
+      let token = await getToken()
+      if (!token) {
+        try {
+          const templateName = (process.env.NEXT_PUBLIC_CLERK_SUPABASE_TEMPLATE as string) || 'supabase'
+          token = await getToken({ template: templateName })
+        } catch (e) {
+          // ignore - handled below
+        }
+      }
       if (!token) {
         throw new Error('Authentication required')
       }
