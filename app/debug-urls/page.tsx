@@ -19,6 +19,11 @@ export default function DebugUrlsPage() {
     result: '',
     error: ''
   })
+  const [envTest, setEnvTest] = useState({
+    testing: false,
+    result: '',
+    error: ''
+  })
 
   useEffect(() => {
     setUrls({
@@ -57,6 +62,27 @@ export default function DebugUrlsPage() {
       })
     } catch (error: any) {
       setVoteTest({
+        testing: false,
+        result: '',
+        error: `Network Error: ${error.message}`
+      })
+    }
+  }
+
+  const testEnvironmentVariables = async () => {
+    setEnvTest({ testing: true, result: '', error: '' })
+    
+    try {
+      const response = await fetch('/api/debug/environment')
+      const data = await response.json()
+      
+      setEnvTest({
+        testing: false,
+        result: JSON.stringify(data, null, 2),
+        error: !response.ok ? `HTTP ${response.status}: ${response.statusText}` : ''
+      })
+    } catch (error: any) {
+      setEnvTest({
         testing: false,
         result: '',
         error: `Network Error: ${error.message}`
@@ -118,6 +144,34 @@ export default function DebugUrlsPage() {
               <div className="bg-green-50 dark:bg-green-900/20 p-3 rounded border border-green-200 dark:border-green-800">
                 <div className="text-green-700 dark:text-green-400 font-semibold">📊 Result:</div>
                 <pre className="text-xs mt-1 overflow-auto">{voteTest.result}</pre>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Environment Variables Test */}
+        <div className="bg-card p-4 rounded-lg border">
+          <h3 className="font-semibold mb-2">🔧 Environment Variables Test:</h3>
+          <div className="space-y-3">
+            <Button 
+              onClick={testEnvironmentVariables} 
+              disabled={envTest.testing || loading}
+              className="bg-blue-600 hover:bg-blue-700"
+            >
+              {envTest.testing ? 'Testing...' : 'Test Server Environment'}
+            </Button>
+            
+            {envTest.error && (
+              <div className="bg-red-50 dark:bg-red-900/20 p-3 rounded border border-red-200 dark:border-red-800">
+                <div className="text-red-700 dark:text-red-400 font-semibold">❌ Error:</div>
+                <div className="text-sm font-mono mt-1">{envTest.error}</div>
+              </div>
+            )}
+            
+            {envTest.result && (
+              <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded border border-blue-200 dark:border-blue-800">
+                <div className="text-blue-700 dark:text-blue-400 font-semibold">🔧 Environment Info:</div>
+                <pre className="text-xs mt-1 overflow-auto max-h-40">{envTest.result}</pre>
               </div>
             )}
           </div>

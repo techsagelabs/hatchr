@@ -26,13 +26,47 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     }
     
     console.log('🗳️ Vote API - Attempting vote:', { projectId: id, direction: dir, userId: user.id })
-    const p = await voteProject(id, dir)
+    
+    let p;
+    try {
+      p = await voteProject(id, dir)
+    } catch (voteError: any) {
+      console.error('❌ Vote API - voteProject threw an error:', {
+        error: voteError.message,
+        code: voteError.code,
+        details: voteError.details,
+        hint: voteError.hint,
+        stack: voteError.stack
+      })
+      return NextResponse.json({ 
+        error: "Vote operation failed with exception",
+        details: voteError.message || "Unknown error in voteProject function",
+        code: voteError.code,
+        production_debug: {
+          user_id: user.id,
+          project_id: id,
+          direction: dir,
+          timestamp: new Date().toISOString()
+        }
+      }, { status: 500 })
+    }
     
     if (p === null) {
       console.log('❌ Vote API - voteProject returned null (RLS or database error)')
       return NextResponse.json({ 
-        error: "Vote failed - check server logs for RLS policy issues",
-        details: "This is usually caused by Row Level Security policies blocking the vote operation"
+        error: "Vote failed - voteProject returned null",
+        details: "This is usually caused by Row Level Security policies blocking the vote operation",
+        production_debug: {
+          user_id: user.id,
+          project_id: id,
+          direction: dir,
+          timestamp: new Date().toISOString(),
+          auth_check: {
+            has_user: !!user,
+            user_id: user?.id,
+            user_email: user?.email
+          }
+        }
       }, { status: 500 })
     }
     if (!p) {
