@@ -450,28 +450,53 @@ export async function voteProject(id: string, dir: Exclude<VoteDirection, null>)
     console.log('⚠️ voteProject - Auth test function not available:', authTestError)
   }
 
-  // 🔧 PRODUCTION FIX: Use service client if RLS auth context is broken
-  console.log('🔄 voteProject - Testing RLS vs Service client approach')
+  // 🔧 PRODUCTION DEBUG: Detailed step-by-step analysis
+  console.log('🔄 voteProject - Starting detailed analysis')
   
   let workingSupabase = supabase
   let usingServiceClient = false
+  let debugInfo = {
+    step1_auth_test: null,
+    step2_client_choice: null,
+    step3_select_test: null,
+    step4_operation_result: null
+  }
   
-  // Test if RLS auth context is working
+  // Step 1: Test if RLS auth context is working
   try {
+    console.log('🧪 Step 1: Testing auth context with RPC...')
     const { data: authTest, error: authError } = await supabase.rpc('auth_uid_test')
+    debugInfo.step1_auth_test = { authTest, authError, success: !authError && authTest?.has_auth_uid === true }
+    
+    console.log('🧪 Step 1 Result:', debugInfo.step1_auth_test)
+    
     if (authError || !authTest || authTest.has_auth_uid !== true) {
-      console.log('⚠️ voteProject - RLS auth context broken, switching to service client')
-      workingSupabase = createServiceSupabaseClient()
-      usingServiceClient = true
+      console.log('⚠️ Step 1 Failed: Auth context broken, switching to service client')
+      try {
+        workingSupabase = createServiceSupabaseClient()
+        usingServiceClient = true
+        console.log('✅ Service client created successfully')
+      } catch (serviceError: any) {
+        console.error('❌ Service client creation failed:', serviceError)
+        throw new Error(`Service client creation failed: ${serviceError.message}`)
+      }
+    } else {
+      console.log('✅ Step 1 Success: Auth context working, using regular client')
     }
-  } catch (e) {
-    console.log('⚠️ voteProject - Auth test failed, switching to service client')
+  } catch (e: any) {
+    console.error('❌ Step 1 Exception:', e)
+    debugInfo.step1_auth_test = { exception: e.message, stack: e.stack }
     workingSupabase = createServiceSupabaseClient()
     usingServiceClient = true
   }
+  
+  debugInfo.step2_client_choice = { usingServiceClient, clientType: usingServiceClient ? 'service' : 'regular' }
+  console.log('🧪 Step 2 Client Choice:', debugInfo.step2_client_choice)
 
-  // Check for existing vote
-  console.log('🔍 voteProject - Checking for existing vote', { usingServiceClient })
+  // Step 3: Check for existing vote with detailed logging
+  console.log('🧪 Step 3: Testing SELECT operation on votes table...')
+  let selectStartTime = Date.now()
+  
   const { data: existingVote, error: selectError } = await workingSupabase
     .from('votes')
     .select('*')
@@ -479,13 +504,33 @@ export async function voteProject(id: string, dir: Exclude<VoteDirection, null>)
     .eq('user_id', user.id)
     .single()
 
-  if (selectError && selectError.code !== 'PGRST116') {
-    console.error('❌ voteProject - Error checking existing vote:', {
-      error: selectError.message,
+  let selectDuration = Date.now() - selectStartTime
+  
+  debugInfo.step3_select_test = {
+    duration_ms: selectDuration,
+    hasData: !!existingVote,
+    hasError: !!selectError,
+    error: selectError ? {
+      message: selectError.message,
       code: selectError.code,
       details: selectError.details,
       hint: selectError.hint
+    } : null,
+    isNotFoundError: selectError?.code === 'PGRST116'
+  }
+  
+  console.log('🧪 Step 3 Result:', debugInfo.step3_select_test)
+
+  if (selectError && selectError.code !== 'PGRST116') {
+    console.error('❌ Step 3 FAILED: Error checking existing vote:', {
+      error: selectError.message,
+      code: selectError.code,
+      details: selectError.details,
+      hint: selectError.hint,
+      debugInfo
     })
+    // Return null here to see if this is where the failure happens
+    return null
   }
   
   console.log('📊 voteProject - Existing vote check result:', { 
@@ -560,8 +605,28 @@ export async function voteProject(id: string, dir: Exclude<VoteDirection, null>)
     console.log('✅ voteProject - New vote created successfully')
   }
 
-  // Return updated project
-  return await getProject(id)
+  // Step 4: Return updated project with final debugging
+  console.log('🧪 Step 4: Fetching updated project...')
+  debugInfo.step4_operation_result = { success: true, operation: 'completed' }
+  
+  console.log('🎉 voteProject - All steps completed successfully:', debugInfo)
+  
+  try {
+    const updatedProject = await getProject(id)
+    console.log('✅ voteProject - Final result:', { 
+      hasProject: !!updatedProject,
+      projectId: updatedProject?.id,
+      debugInfo
+    })
+    return updatedProject
+  } catch (finalError: any) {
+    console.error('❌ voteProject - Final getProject failed:', { 
+      error: finalError.message,
+      stack: finalError.stack,
+      debugInfo
+    })
+    return null
+  }
 }
 
 export async function listComments(projectId: string): Promise<Comment[]> {

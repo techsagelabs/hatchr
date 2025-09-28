@@ -7,18 +7,89 @@ export async function GET() {
     // Get current user
     const user = await getCurrentUser()
     
-    // Test Supabase connection
-    let supabaseTest = { connected: false, error: null }
+    // Test Supabase connection with detailed debugging
+    let supabaseTest = { 
+      connected: false, 
+      error: null, 
+      details: {},
+      rawError: null,
+      clientType: 'unknown'
+    }
+    
     try {
       const supabase = await createServerSupabaseClient()
-      const { data, error } = await supabase.from('votes').select('COUNT(*)', { count: 'exact', head: true })
+      supabaseTest.clientType = 'server_client'
+      
+      console.log('🧪 Debug: Testing basic supabase connection')
+      
+      // Test 1: Simple count query
+      const { data, error, count } = await supabase
+        .from('votes')
+        .select('*', { count: 'exact', head: true })
+        
+      console.log('🧪 Debug: Votes count result:', { data, error, count })
+      
       if (error) {
-        supabaseTest = { connected: false, error: error.message }
+        supabaseTest = { 
+          connected: false, 
+          error: error.message,
+          details: {
+            code: error.code,
+            details: error.details,
+            hint: error.hint,
+            message: error.message
+          },
+          rawError: error,
+          clientType: 'server_client'
+        }
       } else {
-        supabaseTest = { connected: true, error: null }
+        // Test 2: Try a simple select with auth context
+        const { data: authData, error: authError } = await supabase
+          .from('votes')
+          .select('id')
+          .limit(1)
+          
+        console.log('🧪 Debug: Auth context test:', { authData, authError })
+        
+        if (authError) {
+          supabaseTest = {
+            connected: false,
+            error: `Auth context failed: ${authError.message}`,
+            details: {
+              step: 'auth_context_test',
+              code: authError.code,
+              details: authError.details,
+              hint: authError.hint
+            },
+            rawError: authError,
+            clientType: 'server_client'
+          }
+        } else {
+          supabaseTest = { 
+            connected: true, 
+            error: null,
+            details: {
+              count_result: count,
+              auth_test_result: authData
+            },
+            rawError: null,
+            clientType: 'server_client'
+          }
+        }
       }
     } catch (err: any) {
-      supabaseTest = { connected: false, error: err.message }
+      console.error('🧪 Debug: Supabase connection threw exception:', err)
+      supabaseTest = { 
+        connected: false, 
+        error: err.message,
+        details: {
+          name: err.name,
+          stack: err.stack,
+          cause: err.cause
+        },
+        rawError: err,
+        clientType: 'server_client'
+      }
     }
 
     // Test auth.uid() function
