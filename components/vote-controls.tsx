@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils"
 import { Triangle } from "lucide-react"
 import { useAuth } from "@/lib/auth-context"
 import { SignUpPromptModal } from "@/components/sign-up-prompt-modal"
+import { createClient } from "@/utils/supabase/client"
 
 export function VoteControls({
   projectId,
@@ -62,9 +63,32 @@ export function VoteControls({
     }
     await mutate(optimistic, false)
     try {
+      // 🚀 PRODUCTION FIX: Get JWT token and include it in the request
+      const supabase = createClient()
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession()
+      
+      console.log('🔑 Vote request - Auth info:', {
+        hasSession: !!session,
+        hasAccessToken: !!session?.access_token,
+        tokenPreview: session?.access_token ? `${session.access_token.substring(0, 20)}...` : 'none',
+        sessionError: sessionError?.message
+      })
+      
+      const headers: Record<string, string> = {
+        "Content-Type": "application/json"
+      }
+      
+      // Include JWT token if available
+      if (session?.access_token) {
+        headers.Authorization = `Bearer ${session.access_token}`
+        console.log('✅ Including JWT token in vote request')
+      } else {
+        console.log('⚠️ No JWT token available for vote request')
+      }
+      
       const res = await fetch(`/api/projects/${projectId}/vote`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers,
         body: JSON.stringify({ direction: dir }),
       })
       

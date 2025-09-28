@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server"
 import { getProject, voteProject } from "@/lib/data"
-import { createClient as createServerSupabaseClient } from "@/utils/supabase/server"
+import { createClient as createServerSupabaseClient, createClientForApiRoute } from "@/utils/supabase/server"
 import { getCurrentUser } from "@/lib/auth"
 
 export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -27,9 +27,12 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     
     console.log('🗳️ Vote API - Attempting vote:', { projectId: id, direction: dir, userId: user.id })
     
+    // 🚀 PRODUCTION FIX: Create authenticated Supabase client with JWT token
+    const authenticatedSupabase = createClientForApiRoute(req)
+    
     let p;
     try {
-      p = await voteProject(id, dir)
+      p = await voteProject(id, dir, authenticatedSupabase)
     } catch (voteError: any) {
       console.error('❌ Vote API - voteProject threw an error:', {
         error: voteError.message,

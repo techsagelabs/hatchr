@@ -422,7 +422,11 @@ export async function createProject(input: {
   }
 }
 
-export async function voteProject(id: string, dir: Exclude<VoteDirection, null>): Promise<ProjectWithUserVote | null> {
+export async function voteProject(
+  id: string, 
+  dir: Exclude<VoteDirection, null>,
+  authenticatedSupabase?: any // Optional authenticated Supabase client for API routes
+): Promise<ProjectWithUserVote | null> {
   const user = await getCurrentUser()
   if (!user) {
     console.log('❌ voteProject - No user authenticated')
@@ -433,10 +437,19 @@ export async function voteProject(id: string, dir: Exclude<VoteDirection, null>)
     projectId: id, 
     direction: dir, 
     userId: user.id,
-    userName: user.username 
+    userName: user.username,
+    hasAuthenticatedClient: !!authenticatedSupabase
   })
 
-  const supabase = await createServerSupabaseClient()
+  // 🚀 PRODUCTION FIX: Use authenticated client if provided (from API routes)
+  // This ensures JWT token is properly forwarded for table operations
+  const supabase = authenticatedSupabase || await createServerSupabaseClient()
+  
+  if (authenticatedSupabase) {
+    console.log('✅ Using JWT-authenticated Supabase client from API route')
+  } else {
+    console.log('⚠️ Using cookie-based Supabase client (fallback)')
+  }
   
   // 🔧 PRODUCTION DEBUG: Test if auth context is working
   try {
