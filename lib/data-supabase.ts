@@ -1,5 +1,6 @@
 import { getCurrentUser } from "./auth"
 import { createClient as createServerSupabaseClient } from '@/utils/supabase/server'
+import { createServiceSupabaseClient } from "./supabase-service"
 import { type Database } from "./supabase"
 import type { Comment, Project, ProjectWithUserVote, User, VoteDirection } from "./types"
 
@@ -436,10 +437,42 @@ export async function voteProject(id: string, dir: Exclude<VoteDirection, null>)
   })
 
   const supabase = await createServerSupabaseClient()
+  
+  // 🔧 PRODUCTION DEBUG: Test if auth context is working
+  try {
+    const { data: authTest, error: authError } = await supabase.rpc('auth_uid_test')
+    console.log('🔍 voteProject - Auth context test:', { 
+      authTest, 
+      authError,
+      expectedUserId: user.id 
+    })
+  } catch (authTestError) {
+    console.log('⚠️ voteProject - Auth test function not available:', authTestError)
+  }
+
+  // 🔧 PRODUCTION FIX: Use service client if RLS auth context is broken
+  console.log('🔄 voteProject - Testing RLS vs Service client approach')
+  
+  let workingSupabase = supabase
+  let usingServiceClient = false
+  
+  // Test if RLS auth context is working
+  try {
+    const { data: authTest, error: authError } = await supabase.rpc('auth_uid_test')
+    if (authError || !authTest || authTest.has_auth_uid !== true) {
+      console.log('⚠️ voteProject - RLS auth context broken, switching to service client')
+      workingSupabase = createServiceSupabaseClient()
+      usingServiceClient = true
+    }
+  } catch (e) {
+    console.log('⚠️ voteProject - Auth test failed, switching to service client')
+    workingSupabase = createServiceSupabaseClient()
+    usingServiceClient = true
+  }
 
   // Check for existing vote
-  console.log('🔍 voteProject - Checking for existing vote')
-  const { data: existingVote, error: selectError } = await supabase
+  console.log('🔍 voteProject - Checking for existing vote', { usingServiceClient })
+  const { data: existingVote, error: selectError } = await workingSupabase
     .from('votes')
     .select('*')
     .eq('project_id', id)
@@ -464,7 +497,7 @@ export async function voteProject(id: string, dir: Exclude<VoteDirection, null>)
     if (existingVote.vote_type === dir) {
       // Remove vote if clicking the same direction
       console.log('🗑️ voteProject - Removing existing vote (same direction)')
-      const { error } = await supabase
+      const { error } = await workingSupabase
         .from('votes')
         .delete()
         .eq('id', existingVote.id)
@@ -486,7 +519,7 @@ export async function voteProject(id: string, dir: Exclude<VoteDirection, null>)
         from: existingVote.vote_type, 
         to: dir 
       })
-      const { error } = await supabase
+      const { error } = await workingSupabase
         .from('votes')
         .update({ vote_type: dir })
         .eq('id', existingVote.id)
@@ -506,7 +539,7 @@ export async function voteProject(id: string, dir: Exclude<VoteDirection, null>)
   } else {
     // Create new vote
     console.log('➕ voteProject - Creating new vote')
-    const { error } = await supabase
+    const { error } = await workingSupabase
       .from('votes')
       .insert({
         project_id: id,

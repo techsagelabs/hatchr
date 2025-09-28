@@ -40,16 +40,18 @@ FROM votes;
 -- FROM votes 
 -- WHERE user_id = auth.uid()::text;
 
--- 5. 📈 Show table statistics
+-- 5. 📈 Show table statistics  
 SELECT 
     '📈 Table Stats:' as info,
-    schemaname,
-    tablename,
+    relname as table_name,
     n_tup_ins as inserts,
     n_tup_upd as updates,
-    n_tup_del as deletes
+    n_tup_del as deletes,
+    n_tup_hot_upd as hot_updates,
+    n_live_tup as live_tuples,
+    n_dead_tup as dead_tuples
 FROM pg_stat_user_tables 
-WHERE tablename = 'votes';
+WHERE relname = 'votes';
 
 SELECT '✅ RLS Policy Verification Complete' as result;
 SELECT 'If you see 13+ policies above, the fix was NOT applied. Re-run URGENT-fix-vote-rls-production.sql' as important_note;
