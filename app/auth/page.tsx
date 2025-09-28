@@ -6,6 +6,7 @@ import { createClient } from '@/utils/supabase/client'
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { getAuthCallbackUrl } from '@/lib/url-utils'
 
 export default function AuthPage() {
   const supabase = createClient()
@@ -67,7 +68,7 @@ export default function AuthPage() {
               }
             }}
             providers={['google', 'github']}
-            redirectTo={`${window.location.origin}/auth/callback?next=/`}
+            redirectTo={getAuthCallbackUrl('/')}
             showLinks={true}
             view="sign_in"
           />

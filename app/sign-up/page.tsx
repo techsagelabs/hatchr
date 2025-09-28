@@ -11,6 +11,7 @@ import { useAuth } from '@/lib/auth-context'
 import { toast } from 'sonner'
 import { Eye, EyeOff } from 'lucide-react'
 import { createClient } from '@/utils/supabase/client'
+import { getAuthCallbackUrl } from '@/lib/url-utils'
 
 export default function SignUpPage() {
   const [email, setEmail] = useState('')
@@ -60,7 +61,7 @@ export default function SignUpPage() {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/auth/callback?next=/`
+          redirectTo: getAuthCallbackUrl('/')
         }
       })
       
