@@ -10,7 +10,6 @@ export async function GET() {
       hasSupabaseUrl: !!process.env.NEXT_PUBLIC_SUPABASE_URL,
       hasSupabaseKey: !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
       hasServiceKey: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
-      hasClerkKey: !!process.env.CLERK_SECRET_KEY,
     })
 
     const user = await getCurrentUser()

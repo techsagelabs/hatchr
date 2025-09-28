@@ -5,12 +5,12 @@ import { GeistMono } from "geist/font/mono"
 import { Analytics } from "@vercel/analytics/next"
 import { SpeedInsights } from "@vercel/speed-insights/next"
 import { Suspense } from "react"
-import { ClerkProvider } from "@clerk/nextjs"
 import "./globals.css"
 import { ThemeProvider } from "@/components/theme-provider"
 import { SWRConfigProvider } from "@/components/swr-config-provider"
 import { ClientProviders } from "@/components/client-providers"
 import { RealtimeProvider } from "@/lib/realtime-provider"
+import { AuthProvider } from "@/lib/auth-context"
 
 export const metadata: Metadata = {
   title: "Hatchr",
@@ -30,10 +30,10 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <ClerkProvider>
-      <html lang="en" suppressHydrationWarning className={`${inter.variable} ${GeistMono.variable} antialiased`}>
-        <body className="min-h-screen bg-background font-sans tracking-[-0.01em] text-foreground" suppressHydrationWarning>
-          <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+    <html lang="en" suppressHydrationWarning className={`${inter.variable} ${GeistMono.variable} antialiased`}>
+      <body className="min-h-screen bg-background font-sans tracking-[-0.01em] text-foreground" suppressHydrationWarning>
+        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+          <AuthProvider>
             <SWRConfigProvider>
               <RealtimeProvider>
                 <ClientProviders>
@@ -43,9 +43,9 @@ export default function RootLayout({
                 </ClientProviders>
               </RealtimeProvider>
             </SWRConfigProvider>
-          </ThemeProvider>
-        </body>
-      </html>
-    </ClerkProvider>
+          </AuthProvider>
+        </ThemeProvider>
+      </body>
+    </html>
   )
 }

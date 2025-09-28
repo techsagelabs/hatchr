@@ -1,22 +1,22 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useUser } from "@clerk/nextjs"
+import { useAuth } from "@/lib/auth-context"
 import { OnboardingModal } from "@/components/onboarding-modal"
 
 export function OnboardingTrigger() {
-  const { user, isLoaded } = useUser()
+  const { user, loading } = useAuth()
   const [showOnboarding, setShowOnboarding] = useState(false)
   const [hasChecked, setHasChecked] = useState(false)
 
   useEffect(() => {
-    if (!isLoaded || !user || hasChecked) return
+    if (loading || !user || hasChecked) return
 
     // Check if user needs onboarding
     const checkOnboardingStatus = async () => {
       try {
         // Check if user is truly new (created within last 2 minutes)
-        const userCreatedAt = new Date(user.createdAt)
+        const userCreatedAt = new Date(user.created_at || user.createdAt || Date.now())
         const now = new Date()
         const twoMinutesAgo = new Date(now.getTime() - 2 * 60 * 1000)
         const isNewUser = userCreatedAt > twoMinutesAgo
@@ -51,7 +51,7 @@ export function OnboardingTrigger() {
     // Small delay to ensure user data is fully loaded
     const timer = setTimeout(checkOnboardingStatus, 1000)
     return () => clearTimeout(timer)
-  }, [isLoaded, user, hasChecked])
+  }, [loading, user, hasChecked])
 
   if (!user || !showOnboarding) return null
 
@@ -63,8 +63,8 @@ export function OnboardingTrigger() {
   return (
     <OnboardingModal
       isOpen={showOnboarding}
-      userName={user.fullName || user.firstName || 'User'}
-      userAvatar={user.imageUrl}
+      userName={(user.user_metadata?.username as string) || user.email || 'User'}
+      userAvatar={(user.user_metadata?.avatar_url as string) || undefined}
       onComplete={handleOnboardingComplete}
     />
   )

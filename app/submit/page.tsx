@@ -1,7 +1,7 @@
 import { Navbar } from "@/components/navbar"
 import { SubmitProjectForm } from "@/components/forms/submit-project-form"
 import { getCurrentUser } from "@/lib/auth"
-import { SignInButton } from "@clerk/nextjs"
+import Link from "next/link"
 import { Button } from "@/components/ui/button"
 
 export default async function SubmitPage() {
@@ -17,11 +17,11 @@ export default async function SubmitPage() {
             <p className="text-muted-foreground mb-6">
               Join our community to share your amazing projects and get feedback from others.
             </p>
-            <SignInButton mode="modal">
+            <Link href="/sign-in">
               <Button className="bg-orange-600 hover:bg-orange-700">
                 Sign in to submit
               </Button>
-            </SignInButton>
+            </Link>
           </div>
         </section>
       </main>

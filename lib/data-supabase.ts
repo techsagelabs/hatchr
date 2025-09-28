@@ -412,7 +412,7 @@ export async function createProject(input: {
     console.log('Project created successfully:', project.id)
 
     return {
-      ...dbProjectToProject(project),
+      ...(await dbProjectToProject(project, supabase)),
       userVote: null,
     }
   } catch (error) {

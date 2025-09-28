@@ -41,14 +41,16 @@ export function SubmitProjectForm() {
       if (!res.ok) {
         const error = await res.json()
         console.error("Failed to submit project:", error)
-        alert(`Failed to submit project: ${error.error || 'Unknown error'}`)
+        alert(`Failed to submit project: ${error.error || `HTTP ${res.status}: ${res.statusText}`}`)
         return
       }
       
       const p = await res.json()
+      console.log('API Response:', p) // Debug logging
+      
       if (!p || !p.id) {
         console.error("Invalid response:", p)
-        alert("Failed to submit project: Invalid response from server")
+        alert(`Failed to submit project: ${p?.error || 'Invalid response from server'}`)
         return
       }
       

@@ -16,7 +16,7 @@ export async function GET() {
 
     const profile = await getCurrentUserProfile()
     
-    // If no profile exists, create one with basic info from Clerk
+    // If no profile exists, create one with basic info from Supabase Auth
     if (!profile) {
       const newProfile = await createOrUpdateUserProfile(
         user.id, 

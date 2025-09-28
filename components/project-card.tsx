@@ -9,7 +9,7 @@ import type { ProjectWithUserVote } from "@/lib/types"
 import { VoteControls } from "./vote-controls"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu"
-import { useUser } from "@clerk/nextjs"
+import { useAuth } from "@/lib/auth-context"
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { Trash2, Edit, Flag } from "lucide-react"
@@ -35,7 +35,7 @@ function toUsernameSlug(name?: string) {
 }
 
 export function ProjectCard({ project }: { project: ProjectWithUserVote }) {
-  const { user, isLoaded } = useUser()
+  const { user, loading } = useAuth()
   const router = useRouter()
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [reportDialogOpen, setReportDialogOpen] = useState(false)
@@ -53,7 +53,7 @@ export function ProjectCard({ project }: { project: ProjectWithUserVote }) {
   const profileHref = `/u/${toUsernameSlug(authorName)}`
   
   // Avatar is now handled at the data level (custom avatar prioritized over Clerk)
-  const isCurrentUser = isLoaded && user?.id === project.author.id
+  const isCurrentUser = !loading && user?.id === project.author.id
   const avatarUrl = project.author?.avatarUrl
 
   const handleDelete = async () => {
@@ -85,7 +85,7 @@ export function ProjectCard({ project }: { project: ProjectWithUserVote }) {
   }
 
   const handleCommentClick = () => {
-    if (!isLoaded || !user) {
+    if (loading || !user) {
       setShowCommentSignUpModal(true)
       return
     }
@@ -115,7 +115,7 @@ export function ProjectCard({ project }: { project: ProjectWithUserVote }) {
           {/* Single unified menu */}
           <UnifiedProjectMenu 
             project={project} 
-            user={isLoaded ? user : null}
+            user={!loading ? user : null}
             onDelete={() => setDeleteDialogOpen(true)}
             onReport={() => setReportDialogOpen(true)}
           />
@@ -131,6 +131,23 @@ export function ProjectCard({ project }: { project: ProjectWithUserVote }) {
           <div className="mt-3 overflow-hidden rounded-xl border bg-muted">
             {videoUrl ? (
               <video src={videoUrl} controls preload="metadata" className="block h-auto w-full" />
+            ) : mediaSrc?.includes('zjappsarpwtbdvgdrwhc.supabase.co') ? (
+              <img
+                src={mediaSrc}
+                alt={`${project.title} preview`}
+                className="block h-auto w-full object-cover"
+                style={{ aspectRatio: '16/9' }}
+                loading="lazy"
+                onError={(e) => {
+                  console.log('🖼️ Image load error for project:', project.title, {
+                    originalSrc: mediaSrc,
+                    projectThumbnailUrl: project.thumbnailUrl,
+                    fallbackSrc: e.currentTarget.src
+                  })
+                  e.currentTarget.onerror = null
+                  e.currentTarget.src = "/image---video.png"
+                }}
+              />
             ) : (
               <Image
                 src={
@@ -142,7 +159,7 @@ export function ProjectCard({ project }: { project: ProjectWithUserVote }) {
                 className="block h-auto w-full object-cover"
                 loading="lazy"
                 placeholder="blur"
-                blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCdABmX/9k="
+                blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCdABmX/9k="
                 onError={(e) => {
                   console.log('🖼️ Image load error for project:', project.title, {
                     originalSrc: mediaSrc,

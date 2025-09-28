@@ -23,7 +23,6 @@ const nextConfig = {
   },
   images: {
     domains: [
-      'images.clerk.dev',
       '*.supabase.co',
       'via.placeholder.com',
     ],

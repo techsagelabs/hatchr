@@ -1,8 +1,8 @@
 "use client"
 
 import React, { createContext, useContext, useEffect, useState } from 'react'
-import { useUser } from '@clerk/nextjs'
-import { supabase } from '@/utils/supabase/client'
+import { useAuth } from '@/lib/auth-context'
+import { createClient } from '@/utils/supabase/client'
 import { useSWRConfig } from 'swr'
 import { toast } from '@/hooks/use-toast'
 
@@ -25,15 +25,25 @@ interface RealtimeProviderProps {
 }
 
 export function RealtimeProvider({ children }: RealtimeProviderProps) {
-  const { isSignedIn, user } = useUser()
+  const { user } = useAuth()
   const { mutate } = useSWRConfig()
   const [connectionStatus, setConnectionStatus] = useState<'connecting' | 'connected' | 'disconnected'>('disconnected')
+  const supabase = createClient()
 
   useEffect(() => {
-    if (!isSignedIn) return
+    if (!user) {
+      setConnectionStatus('disconnected')
+      return
+    }
 
     console.log('🔄 Setting up real-time subscriptions...')
     setConnectionStatus('connecting')
+    
+    // Add timeout for connection attempts
+    const connectionTimeout = setTimeout(() => {
+      console.warn('⏰ Real-time connection timeout after 10 seconds')
+      setConnectionStatus('disconnected')
+    }, 10000)
 
     // Declare channels outside try block for cleanup access
     let votesChannel: any = null
@@ -66,8 +76,10 @@ export function RealtimeProvider({ children }: RealtimeProviderProps) {
       .subscribe((status) => {
         console.log('Votes subscription status:', status)
         if (status === 'SUBSCRIBED') {
+          clearTimeout(connectionTimeout)
           setConnectionStatus('connected')
         } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+          clearTimeout(connectionTimeout)
           setConnectionStatus('disconnected')
         }
       })
@@ -209,6 +221,7 @@ export function RealtimeProvider({ children }: RealtimeProviderProps) {
       .subscribe((status) => {
         console.log('Projects subscription status:', status)
         if (status === 'SUBSCRIBED') {
+          clearTimeout(connectionTimeout)
           setConnectionStatus('connected')
         }
       })
@@ -225,6 +238,7 @@ export function RealtimeProvider({ children }: RealtimeProviderProps) {
     // Cleanup subscriptions on unmount
     return () => {
       console.log('🧹 Cleaning up real-time subscriptions')
+      clearTimeout(connectionTimeout)
       try {
         votesChannel?.unsubscribe()
         commentsChannel?.unsubscribe()
@@ -235,7 +249,7 @@ export function RealtimeProvider({ children }: RealtimeProviderProps) {
         console.error('Error cleaning up subscriptions:', error)
       }
     }
-  }, [isSignedIn, user?.id, mutate])
+  }, [user?.id, mutate])
 
   return (
     <RealtimeContext.Provider value={{

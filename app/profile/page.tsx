@@ -4,7 +4,7 @@ import { getCurrentUser } from "@/lib/auth"
 import { getCurrentUserProfile } from "@/lib/user-profiles"
 import { listProjectsByUser, getUserStats } from "@/lib/data"
 import { ProjectCard } from "@/components/project-card"
-import { SignInButton, SignOutButton } from "@clerk/nextjs"
+import { SignOutButton } from "@/components/sign-out-button"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { LogOut, Plus, Edit, Globe, Github, Twitter, Linkedin, MapPin, BarChart3, ThumbsUp, MessageSquare, Users } from "lucide-react"
@@ -27,11 +27,11 @@ export default async function ProfilePage() {
             <p className="text-muted-foreground mb-6">
               You need to sign in to view your profile and projects.
             </p>
-            <SignInButton mode="modal">
+            <Link href="/sign-in">
               <Button className="bg-orange-600 hover:bg-orange-700">
                 Sign in to continue
               </Button>
-            </SignInButton>
+            </Link>
           </div>
         </section>
       </main>
@@ -53,16 +53,26 @@ export default async function ProfilePage() {
                 <CardContent className="p-6">
                   <div className="flex flex-col items-center text-center">
                     <div className="relative mb-4">
-                      <Image
-                        src={(profile?.avatarUrl || user.avatarUrl) || "/placeholder.svg?height=120&width=120&query=avatar"}
-                        alt={`${profile?.displayName || user.name} avatar`}
-                        width={96}
-                        height={96}
-                        className="h-24 w-24 rounded-full object-cover"
-                        priority={true}
-                        placeholder="blur"
-                        blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCdABmX/9k="
-                      />
+                      {(profile?.avatarUrl || user.avatarUrl)?.includes('googleusercontent.com') ? (
+                        // Use regular img tag for Google images to bypass Next.js image optimization
+                        <img
+                          src={(profile?.avatarUrl || user.avatarUrl) || "/placeholder.svg?height=120&width=120&query=avatar"}
+                          alt={`${profile?.displayName || user.name} avatar`}
+                          className="h-24 w-24 rounded-full object-cover"
+                          loading="lazy"
+                        />
+                      ) : (
+                        <Image
+                          src={(profile?.avatarUrl || user.avatarUrl) || "/placeholder.svg?height=120&width=120&query=avatar"}
+                          alt={`${profile?.displayName || user.name} avatar`}
+                          width={96}
+                          height={96}
+                          className="h-24 w-24 rounded-full object-cover"
+                          priority={true}
+                          placeholder="blur"
+                          blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCdABmX/9k="
+                        />
+                      )}
                       <ProfileEditButton profile={profile} className="absolute -bottom-2 -right-2" />
                     </div>
                     

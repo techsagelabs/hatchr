@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Trash2, Users, ExternalLink } from "lucide-react"
-import { useUser } from "@clerk/nextjs"
+import { useAuth } from "@/lib/auth-context"
 import useSWR, { useSWRConfig } from 'swr'
 import { useState } from "react"
 import { toast } from "@/hooks/use-toast"
@@ -73,13 +73,26 @@ function ConnectionItem({ connection }: { connection: any }) {
 }
 
 export default function ConnectionsPage() {
-  const { isSignedIn } = useUser()
+  const { user, loading } = useAuth()
   const { data: connections, isLoading } = useSWR(
-    isSignedIn ? '/api/connections/my-connections' : null, 
+    user ? '/api/connections/my-connections' : null, 
     fetcher
   )
 
-  if (!isSignedIn) {
+  if (loading) {
+    return (
+      <main>
+        <Navbar />
+        <PageTransition>
+          <section className="mx-auto max-w-3xl px-6 py-6">
+            <p className="text-center text-muted-foreground">Loading...</p>
+          </section>
+        </PageTransition>
+      </main>
+    )
+  }
+
+  if (!user) {
     return (
       <main>
         <Navbar />

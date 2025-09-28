@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Separator } from "@/components/ui/separator"
 import Link from "next/link"
-import { useUser } from "@clerk/nextjs"
+import { useAuth } from "@/lib/auth-context"
 import useSWR, { useSWRConfig } from 'swr'
 import { useState } from "react"
 import { toast } from "@/hooks/use-toast"
@@ -121,11 +121,12 @@ function NotificationItem({ notification, onRead }: { notification: any, onRead:
 
 
 export function NotificationsBell() {
-    const { isSignedIn } = useUser()
-    const { data: notifications, error, mutate } = useSWR(isSignedIn ? '/api/notifications' : null, fetcher)
+    const { user, loading } = useAuth()
+    const { data: notifications, error, mutate } = useSWR(user ? '/api/notifications' : null, fetcher)
     const [isOpen, setIsOpen] = useState(false)
 
-    if (!isSignedIn) return null
+    if (loading) return <div className="w-10 h-10" /> // Loading placeholder
+    if (!user) return null
 
     // Handle loading and error states gracefully
     const safeNotifications = notifications || []

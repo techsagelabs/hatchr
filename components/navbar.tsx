@@ -7,10 +7,10 @@ import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { useEffect, useState } from "react"
 import { ModeToggle } from "@/components/mode-toggle"
-import { SignInButton, SignUpButton, SignedIn, SignedOut, useUser } from "@clerk/nextjs"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import dynamic from "next/dynamic"
 import { RealtimeStatus } from "./realtime-status"
+import { useAuth } from "@/lib/auth-context"
 
 // ✅ OPTIMIZED: Lazy load notifications component (heavy with SWR, modals)
 const NotificationsBell = dynamic(() => import("./notifications-bell").then(mod => ({ default: mod.NotificationsBell })), {
@@ -24,7 +24,7 @@ export function Navbar() {
   const sp = useSearchParams()
   const initialQ = sp.get("q") ?? ""
   const [q, setQ] = useState(initialQ)
-  const { user } = useUser()
+  const { user, loading, signOut } = useAuth()
 
   useEffect(() => {
     setQ(initialQ)
@@ -59,45 +59,51 @@ export function Navbar() {
 
         <div className="flex items-center gap-2 justify-self-end">
           <ModeToggle />
-          <SignedOut>
-            <SignInButton 
-              mode="modal"
-              forceRedirectUrl={typeof window !== 'undefined' ? window.location.origin : '/'}
-              fallbackRedirectUrl="/"
-            >
-              <Button variant="outline" aria-label="Login">
-                Login
-              </Button>
-            </SignInButton>
-            <SignUpButton 
-              mode="modal"
-              forceRedirectUrl={typeof window !== 'undefined' ? window.location.origin : '/'}
-              fallbackRedirectUrl="/"
-            >
-              <Button className="bg-orange-600 hover:bg-orange-700" aria-label="Sign up">
-                Sign up
-              </Button>
-            </SignUpButton>
-          </SignedOut>
-          <SignedIn>
-            <NotificationsBell />
-            <Link href="/submit">
-              <Button variant="default" className="bg-orange-600 hover:bg-orange-700">
-                Submit Project
-              </Button>
-            </Link>
-            <Link href="/profile" className="ml-1">
-              <Avatar className="h-8 w-8 cursor-pointer hover:opacity-80 transition-opacity">
-                <AvatarImage 
-                  src={user?.imageUrl} 
-                  alt={user?.fullName || "Profile"} 
-                />
-                <AvatarFallback className="bg-orange-600 text-white text-sm">
-                  {user?.fullName?.charAt(0) || user?.firstName?.charAt(0) || "U"}
-                </AvatarFallback>
-              </Avatar>
-            </Link>
-          </SignedIn>
+          {loading ? (
+            <div className="w-24 h-10 bg-muted rounded animate-pulse" />
+          ) : user ? (
+            <>
+              <NotificationsBell />
+              <Link href="/submit">
+                <Button variant="default" className="bg-orange-600 hover:bg-orange-700">
+                  Submit Project
+                </Button>
+              </Link>
+              <Link href="/profile" className="ml-1">
+                <Avatar className="h-8 w-8 cursor-pointer hover:opacity-80 transition-opacity">
+                  {user?.user_metadata?.avatar_url?.includes('googleusercontent.com') ? (
+                    <img
+                      src={user.user_metadata.avatar_url}
+                      alt={user?.user_metadata?.username || "Profile"}
+                      className="h-full w-full rounded-full object-cover"
+                      loading="lazy"
+                    />
+                  ) : (
+                    <AvatarImage 
+                      src={user?.user_metadata?.avatar_url} 
+                      alt={user?.user_metadata?.username || "Profile"} 
+                    />
+                  )}
+                  <AvatarFallback className="bg-orange-600 text-white text-sm">
+                    {user?.user_metadata?.username?.charAt(0)?.toUpperCase() || user?.email?.charAt(0)?.toUpperCase() || "U"}
+                  </AvatarFallback>
+                </Avatar>
+              </Link>
+            </>
+          ) : (
+            <>
+              <Link href="/sign-in">
+                <Button variant="outline" aria-label="Login">
+                  Login
+                </Button>
+              </Link>
+              <Link href="/sign-up">
+                <Button className="bg-orange-600 hover:bg-orange-700" aria-label="Sign up">
+                  Sign up
+                </Button>
+              </Link>
+            </>
+          )}
         </div>
       </div>
 

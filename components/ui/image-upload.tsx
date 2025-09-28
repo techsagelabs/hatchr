@@ -6,8 +6,8 @@ import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
 import { Upload, X, Image as ImageIcon, Link } from "lucide-react"
-import { createClient } from '@supabase/supabase-js'
-import { useAuth } from "@clerk/nextjs"
+import { createClient } from '@/utils/supabase/client'
+import { useAuth } from "@/lib/auth-context"
 
 interface ImageUploadProps {
   value: string
@@ -23,26 +23,15 @@ export function ImageUpload({ value, onChange, disabled, label = "Image", requir
   const [useUrlInput, setUseUrlInput] = useState(false)
   const [urlValue, setUrlValue] = useState("")
   const fileInputRef = useRef<HTMLInputElement>(null)
-  const { getToken } = useAuth()
+  const { user } = useAuth()
 
   const uploadImage = async (file: File) => {
     try {
       setUploading(true)
       setError(null)
 
-      // Get auth token for Supabase (native Clerk integration first, then fallback to template)
-      let token = await getToken()
-      if (!token) {
-        try {
-          const templateName = (process.env.NEXT_PUBLIC_CLERK_SUPABASE_TEMPLATE as string) || 'supabase'
-          token = await getToken({ template: templateName })
-        } catch (e) {
-          // ignore - handled below
-        }
-      }
-      if (!token) {
-        throw new Error('Authentication required')
-      }
+      // Ensure authenticated
+      if (!user) throw new Error('Authentication required')
 
       // Create a unique filename
       const fileExt = file.name.split('.').pop()
@@ -50,15 +39,7 @@ export function ImageUpload({ value, onChange, disabled, label = "Image", requir
       const filePath = `project-images/${fileName}`
 
       // Create client-side Supabase client with auth token
-      const supabaseClient = createClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-        {
-          global: {
-            headers: { Authorization: `Bearer ${token}` }
-          }
-        }
-      )
+      const supabaseClient = createClient()
 
       // Upload file to Supabase Storage
       const { data: uploadData, error: uploadError } = await supabaseClient.storage

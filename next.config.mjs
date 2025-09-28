@@ -6,31 +6,44 @@ const nextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
-  // ✅ TARGETED FIX: Very specific remotePatterns for exact hostname match
+  // ✅ FIXED: Simple approach - handle Supabase and Google images with conditional rendering
   images: {
+    domains: [
+      'zjappsarpwtbdvgdrwhc.supabase.co', // Supabase storage
+      'lh1.googleusercontent.com', // Google profile images  
+      'lh2.googleusercontent.com',
+      'lh3.googleusercontent.com',
+      'lh4.googleusercontent.com',
+      'lh5.googleusercontent.com',
+      'lh6.googleusercontent.com',
+      'lh7.googleusercontent.com',
+      'lh8.googleusercontent.com',
+      'googleusercontent.com', // Fallback
+    ],
     remotePatterns: [
       {
         protocol: 'https',
         hostname: 'zjappsarpwtbdvgdrwhc.supabase.co',
-        port: '',
-        pathname: '/storage/v1/object/public/project-assets/**',
-      },
-      {
-        protocol: 'https',
-        hostname: 'zjappsarpwtbdvgdrwhc.supabase.co',
-        port: '',
         pathname: '/storage/v1/object/public/**',
       },
       {
         protocol: 'https',
-        hostname: 'images.clerk.dev',
-        port: '',
+        hostname: 'lh3.googleusercontent.com',
         pathname: '/**',
       },
       {
         protocol: 'https',
-        hostname: 'img.clerk.com',
-        port: '',
+        hostname: 'lh4.googleusercontent.com',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'lh5.googleusercontent.com',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'lh6.googleusercontent.com',
         pathname: '/**',
       },
     ],

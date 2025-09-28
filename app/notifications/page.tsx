@@ -6,7 +6,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { timeAgo } from "@/lib/utils"
-import { useUser } from "@clerk/nextjs"
+import { useAuth } from "@/lib/auth-context"
 import useSWR, { useSWRConfig } from 'swr'
 import { useState } from "react"
 import { toast } from "@/hooks/use-toast"
@@ -123,10 +123,21 @@ function NotificationItem({ notification }: { notification: any }) {
 }
 
 export default function NotificationsPage() {
-    const { isSignedIn } = useUser()
-    const { data: notifications, error } = useSWR(isSignedIn ? '/api/notifications' : null, fetcher)
+    const { user, loading } = useAuth()
+    const { data: notifications, error } = useSWR(user ? '/api/notifications' : null, fetcher)
 
-    if (!isSignedIn) {
+    if (loading) {
+        return (
+            <main>
+                <Navbar />
+                <div className="container mx-auto px-4 py-8">
+                    <div className="animate-pulse">Loading...</div>
+                </div>
+            </main>
+        )
+    }
+
+    if (!user) {
         return (
             <main>
                 <Navbar />

@@ -6,7 +6,7 @@ import { fetcher } from "@/lib/fetcher"
 import type { ProjectWithUserVote, VoteDirection } from "@/lib/types"
 import { cn } from "@/lib/utils"
 import { Triangle } from "lucide-react"
-import { useUser } from "@clerk/nextjs"
+import { useAuth } from "@/lib/auth-context"
 import { SignUpPromptModal } from "@/components/sign-up-prompt-modal"
 
 export function VoteControls({
@@ -16,7 +16,7 @@ export function VoteControls({
   projectId: string
   initial: ProjectWithUserVote
 }) {
-  const { user, isLoaded } = useUser()
+  const { user, loading } = useAuth()
   const { data, mutate } = useSWR<ProjectWithUserVote>(`/api/projects/${projectId}`, fetcher, {
     fallbackData: initial,
   })
@@ -24,9 +24,9 @@ export function VoteControls({
   const [showSignUpModal, setShowSignUpModal] = useState(false)
 
   function handleVoteClick(dir: Exclude<VoteDirection, null>) {
-    // Wait for Clerk to load before checking authentication
-    if (!isLoaded) {
-      console.log('Clerk not loaded yet, please wait...')
+    // Wait for auth to load before checking authentication
+    if (loading) {
+      console.log('Auth not loaded yet, please wait...')
       return
     }
     
@@ -102,9 +102,9 @@ export function VoteControls({
 
   if (!data) return null
 
-  // Only show user's vote state if they are authenticated and Clerk is loaded
-  const upActive = (isLoaded && user) ? data.userVote === "up" : false
-  const downActive = (isLoaded && user) ? data.userVote === "down" : false
+  // Only show user's vote state if they are authenticated and auth is loaded
+  const upActive = (!loading && user) ? data.userVote === "up" : false
+  const downActive = (!loading && user) ? data.userVote === "down" : false
 
   return (
     <>

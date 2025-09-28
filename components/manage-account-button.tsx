@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { UserProfile } from "@clerk/nextjs"
+import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogTrigger, DialogTitle } from "@/components/ui/dialog"
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden"
@@ -18,19 +18,17 @@ export function ManageAccountButton() {
           Manage Account
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-4xl w-[90vw] h-[80vh] p-0">
+      <DialogContent className="max-w-2xl w-[90vw] p-6">
         <VisuallyHidden>
           <DialogTitle>Manage Account</DialogTitle>
         </VisuallyHidden>
-        <UserProfile 
-          routing="hash"
-          appearance={{
-            elements: {
-              rootBox: "w-full h-full",
-              card: "shadow-none border-none h-full",
-            },
-          }}
-        />
+        <div className="space-y-3 text-sm">
+          <p>Manage your account settings:</p>
+          <div className="grid gap-2">
+            <Link href="/profile" className="underline">Edit profile</Link>
+            <Link href="/sign-in" className="underline">Change password (via sign-in)</Link>
+          </div>
+        </div>
       </DialogContent>
     </Dialog>
   )

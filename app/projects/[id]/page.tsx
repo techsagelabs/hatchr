@@ -29,16 +29,25 @@ export default async function ProjectDetail({ params }: { params: Promise<{ id: 
               />
             </div>
             <div className="mt-2 flex items-center gap-2 text-sm text-muted-foreground">
-              <Image
-                src={
-                  project.author.avatarUrl || "/placeholder.svg?height=32&width=32&query=avatar" || "/placeholder.svg"
-                }
-                alt={`${project.author.name} avatar`}
-                width={24}
-                height={24}
-                className="h-6 w-6 rounded-full object-cover"
-                loading="lazy"
-              />
+              {project.author.avatarUrl?.includes('googleusercontent.com') ? (
+                <img
+                  src={project.author.avatarUrl}
+                  alt={`${project.author.name} avatar`}
+                  className="h-6 w-6 rounded-full object-cover"
+                  loading="lazy"
+                />
+              ) : (
+                <Image
+                  src={
+                    project.author.avatarUrl || "/placeholder.svg?height=32&width=32&query=avatar" || "/placeholder.svg"
+                  }
+                  alt={`${project.author.name} avatar`}
+                  width={24}
+                  height={24}
+                  className="h-6 w-6 rounded-full object-cover"
+                  loading="lazy"
+                />
+              )}
               <span>by {project.author.name}</span>
             </div>
           </div>
@@ -46,18 +55,28 @@ export default async function ProjectDetail({ params }: { params: Promise<{ id: 
         </header>
 
         <section className="mt-6 space-y-4">
-          <Image
-            src={
-              project.thumbnailUrl || "/placeholder.svg?height=360&width=640&query=project hero" || "/placeholder.svg"
-            }
-            alt={`${project.title} thumbnail large`}
-            width={640}
-            height={360}
-            className="w-full rounded-md border object-cover"
-            priority={true}
-            placeholder="blur"
-            blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCdABmX/9k="
-          />
+          {project.thumbnailUrl?.includes('zjappsarpwtbdvgdrwhc.supabase.co') ? (
+            <img
+              src={project.thumbnailUrl}
+              alt={`${project.title} thumbnail large`}
+              className="w-full rounded-md border object-cover"
+              style={{ aspectRatio: '16/9' }}
+              loading="lazy"
+            />
+          ) : (
+            <Image
+              src={
+                project.thumbnailUrl || "/placeholder.svg?height=360&width=640&query=project hero" || "/placeholder.svg"
+              }
+              alt={`${project.title} thumbnail large`}
+              width={640}
+              height={360}
+              className="w-full rounded-md border object-cover"
+              priority={true}
+              placeholder="blur"
+              blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCdABmX/9k="
+            />
+          )}
           {project.mediaUrl && (
             <div className="overflow-hidden rounded-md border">
               <iframe

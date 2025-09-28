@@ -3,12 +3,13 @@
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Check, UserPlus, X } from "lucide-react"
-import { useUser, SignInButton } from "@clerk/nextjs"
+import Link from "next/link"
+import { useAuth } from "@/lib/auth-context"
 
 type Status = 'none' | 'pending_out' | 'pending_in' | 'connected'
 
 export function ConnectButton({ otherUserId }: { otherUserId: string }) {
-  const { isSignedIn } = useUser()
+  const { user, loading } = useAuth()
   const [loading, setLoading] = useState(false)
   const [status, setStatus] = useState<Status>('none')
   const [requestId, setRequestId] = useState<string | null>(null)
@@ -68,11 +69,14 @@ export function ConnectButton({ otherUserId }: { otherUserId: string }) {
     } finally { setLoading(false) }
   }
 
-  if (!isSignedIn) {
+  if (loading) {
+    return <div className="h-10 w-24 bg-muted rounded animate-pulse" />
+  }
+  if (!user) {
     return (
-      <SignInButton mode="modal">
+      <Link href="/sign-in">
         <Button variant="outline"><UserPlus className="mr-2 h-4 w-4"/>Connect</Button>
-      </SignInButton>
+      </Link>
     )
   }
 
