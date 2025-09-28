@@ -9,7 +9,7 @@ import { useAuth } from "@/lib/auth-context"
 type Status = 'none' | 'pending_out' | 'pending_in' | 'connected'
 
 export function ConnectButton({ otherUserId }: { otherUserId: string }) {
-  const { user, loading } = useAuth()
+  const { user, loading: authLoading } = useAuth()
   const [loading, setLoading] = useState(false)
   const [status, setStatus] = useState<Status>('none')
   const [requestId, setRequestId] = useState<string | null>(null)
@@ -69,7 +69,7 @@ export function ConnectButton({ otherUserId }: { otherUserId: string }) {
     } finally { setLoading(false) }
   }
 
-  if (loading) {
+  if (authLoading) {
     return <div className="h-10 w-24 bg-muted rounded animate-pulse" />
   }
   if (!user) {
