@@ -63,33 +63,36 @@ export function VoteControls({
     }
     await mutate(optimistic, false)
     try {
-      // 🚀 PRODUCTION FIX: Get JWT token and include it in the request
+      // 🚀 PRODUCTION FIX: Enhanced JWT token handling with fallbacks
       const supabase = createClient()
       const { data: { session }, error: sessionError } = await supabase.auth.getSession()
+      
+      if (sessionError || !session?.access_token) {
+        console.error('🔑 No valid session for voting:', sessionError?.message)
+        throw new Error('No active authentication session')
+      }
       
       console.log('🔑 Vote request - Auth info:', {
         hasSession: !!session,
         hasAccessToken: !!session?.access_token,
-        tokenPreview: session?.access_token ? `${session.access_token.substring(0, 20)}...` : 'none',
-        sessionError: sessionError?.message
+        tokenPreview: session.access_token ? `${session.access_token.substring(0, 20)}...` : 'none',
+        userId: session.user?.id
       })
       
       const headers: Record<string, string> = {
-        "Content-Type": "application/json"
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${session.access_token}`,
+        // Include cookies for dual auth approach
+        "Cookie": document.cookie
       }
       
-      // Include JWT token if available
-      if (session?.access_token) {
-        headers.Authorization = `Bearer ${session.access_token}`
-        console.log('✅ Including JWT token in vote request')
-      } else {
-        console.log('⚠️ No JWT token available for vote request')
-      }
+      console.log('✅ Enhanced auth headers prepared for vote request')
       
       const res = await fetch(`/api/projects/${projectId}/vote`, {
         method: "POST",
         headers,
         body: JSON.stringify({ direction: dir }),
+        credentials: 'include' // Important for cookie-based auth fallback
       })
       
       if (!res.ok) {
