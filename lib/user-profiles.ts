@@ -113,8 +113,29 @@ export async function updateUserProfile(updates: UserProfileUpdate): Promise<Use
 
     const supabase = await createServerSupabaseClient()
     
-    // If username is being updated, check for uniqueness first
-    if (updates.username !== undefined) {
+    // Check if username column exists in the database
+    let hasUsernameColumn = true
+    try {
+      // Try to check if username column exists by querying table info
+      const { error: columnError } = await supabase
+        .from('user_profiles')
+        .select('username')
+        .limit(1)
+        .single()
+        
+      if (columnError && (
+        columnError.message?.includes('column "username" does not exist') ||
+        columnError.code === '42703'
+      )) {
+        hasUsernameColumn = false
+        console.warn('Username column does not exist yet, skipping username update')
+      }
+    } catch (e) {
+      console.warn('Could not check username column existence, assuming it exists')
+    }
+    
+    // If username is being updated and column exists, check for uniqueness first
+    if (updates.username !== undefined && hasUsernameColumn) {
       const { data: existingUser, error: checkError } = await supabase
         .from('user_profiles')
         .select('id')
@@ -137,7 +158,9 @@ export async function updateUserProfile(updates: UserProfileUpdate): Promise<Use
     }
 
     // Map the updates to database column names
-    if (updates.username !== undefined) updateData.username = updates.username
+    if (updates.username !== undefined && hasUsernameColumn) {
+      updateData.username = updates.username
+    }
     if (updates.displayName !== undefined) updateData.display_name = updates.displayName
     if (updates.bio !== undefined) updateData.bio = updates.bio
     if (updates.website !== undefined) updateData.website = updates.website
@@ -156,13 +179,19 @@ export async function updateUserProfile(updates: UserProfileUpdate): Promise<Use
 
     if (error) {
       console.error('Error updating user profile:', error)
+      
+      // If it's a column error, provide a helpful message
+      if (error.message?.includes('column "username" does not exist')) {
+        throw new Error('Database migration required. Please run the username migration script.')
+      }
+      
       return null
     }
 
     return profile ? formatProfile(profile) : null
   } catch (error) {
     console.error('Error in updateUserProfile:', error)
-    return null
+    throw error // Re-throw to be caught by API route
   }
 }
 

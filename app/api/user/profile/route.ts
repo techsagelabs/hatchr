@@ -46,6 +46,20 @@ export async function PUT(req: Request) {
     if (!body || typeof body !== 'object') {
       return NextResponse.json({ error: "Invalid request body" }, { status: 400 })
     }
+    
+    // Username validation
+    if (body.username !== undefined) {
+      if (typeof body.username !== 'string') {
+        return NextResponse.json({ error: "username must be a string" }, { status: 400 })
+      }
+      if (body.username.length < 3 || body.username.length > 30) {
+        return NextResponse.json({ error: "username must be 3-30 characters long" }, { status: 400 })
+      }
+      if (!/^[a-zA-Z0-9_]+$/.test(body.username)) {
+        return NextResponse.json({ error: "username can only contain letters, numbers, and underscores" }, { status: 400 })
+      }
+    }
+    
     if (body.displayName !== undefined && typeof body.displayName !== 'string') {
       return NextResponse.json({ error: "displayName must be a string" }, { status: 400 })
     }
@@ -71,6 +85,7 @@ export async function PUT(req: Request) {
       return NextResponse.json({ error: "location must be a string" }, { status: 400 })
     }
     const updates: UserProfileUpdate = {
+      username: body.username,
       displayName: body.displayName,
       bio: body.bio,
       website: body.website,
@@ -95,8 +110,29 @@ export async function PUT(req: Request) {
     }
 
     return NextResponse.json(updatedProfile)
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error in PUT /api/user/profile:', error)
-    return NextResponse.json({ error: (error as Error).message || "Internal server error" }, { status: 500 })
+    
+    // Handle specific database constraint errors
+    if (error.message?.includes('Username is already taken')) {
+      return NextResponse.json({ error: "Username is already taken" }, { status: 400 })
+    }
+    
+    if (error.message?.includes('Failed to validate username')) {
+      return NextResponse.json({ error: "Failed to validate username availability" }, { status: 500 })
+    }
+    
+    // Handle database column errors (if username column doesn't exist yet)
+    if (error.message?.includes('column "username" does not exist')) {
+      return NextResponse.json({ 
+        error: "Database migration required. Please run the username migration script.",
+        details: "The username field has not been added to the database yet."
+      }, { status: 500 })
+    }
+    
+    return NextResponse.json({ 
+      error: error.message || "Internal server error",
+      details: error.details || undefined
+    }, { status: 500 })
   }
 }
