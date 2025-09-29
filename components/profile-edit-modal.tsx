@@ -32,6 +32,7 @@ export function ProfileEditModal({
   profile, 
   onProfileUpdated 
 }: ProfileEditModalProps) {
+  const [username, setUsername] = useState("")
   const [displayName, setDisplayName] = useState("")
   const [bio, setBio] = useState("")
   const [website, setWebsite] = useState("")
@@ -41,11 +42,13 @@ export function ProfileEditModal({
   const [avatarUrl, setAvatarUrl] = useState("")
   const [location, setLocation] = useState("")
   const [saving, setSaving] = useState(false)
+  const [usernameError, setUsernameError] = useState("")
   const router = useRouter()
 
   // Populate form with existing profile data
   useEffect(() => {
     if (profile) {
+      setUsername(profile.username || "")
       setDisplayName(profile.displayName || "")
       setBio(profile.bio || "")
       setWebsite(profile.website || "")
@@ -55,10 +58,43 @@ export function ProfileEditModal({
       setAvatarUrl(profile.avatarUrl || "")
       setLocation(profile.location || "")
     }
-  }, [profile])
+    setUsernameError("")
+  }, [profile, isOpen])
+
+  // Username validation
+  const validateUsername = (value: string) => {
+    if (!value) {
+      setUsernameError("Username is required")
+      return false
+    }
+    if (value.length < 3) {
+      setUsernameError("Username must be at least 3 characters")
+      return false
+    }
+    if (value.length > 30) {
+      setUsernameError("Username must be less than 30 characters")
+      return false
+    }
+    if (!/^[a-zA-Z0-9_]+$/.test(value)) {
+      setUsernameError("Username can only contain letters, numbers, and underscores")
+      return false
+    }
+    setUsernameError("")
+    return true
+  }
+
+  const handleUsernameChange = (value: string) => {
+    setUsername(value.toLowerCase().replace(/[^a-zA-Z0-9_]/g, ''))
+    validateUsername(value)
+  }
 
   const handleSave = async () => {
     if (saving) return
+
+    // Validate username before saving
+    if (!validateUsername(username)) {
+      return
+    }
 
     setSaving(true)
     try {
@@ -66,6 +102,7 @@ export function ProfileEditModal({
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          username: username || undefined,
           displayName: displayName || undefined,
           bio: bio || undefined,
           website: website || undefined,
@@ -79,6 +116,11 @@ export function ProfileEditModal({
 
       if (!response.ok) {
         const error = await response.json()
+        if (error.message?.includes('Username is already taken')) {
+          setUsernameError("Username is already taken")
+          setSaving(false)
+          return
+        }
         throw new Error(error.message || 'Failed to update profile')
       }
 
@@ -123,12 +165,31 @@ export function ProfileEditModal({
             disabled={saving}
           />
 
+          {/* Username */}
+          <div className="space-y-2">
+            <Label htmlFor="username">Username <span className="text-red-500">*</span></Label>
+            <Input
+              id="username"
+              placeholder="your_username"
+              value={username}
+              onChange={(e) => handleUsernameChange(e.target.value)}
+              disabled={saving}
+              className={usernameError ? "border-red-500" : ""}
+            />
+            {usernameError && (
+              <p className="text-sm text-red-500">{usernameError}</p>
+            )}
+            <p className="text-xs text-muted-foreground">
+              3-30 characters, letters, numbers, and underscores only
+            </p>
+          </div>
+
           {/* Display Name */}
           <div className="space-y-2">
-            <Label htmlFor="displayName">Display Name</Label>
+            <Label htmlFor="displayName">Full Name</Label>
             <Input
               id="displayName"
-              placeholder="Your display name"
+              placeholder="Your full name"
               value={displayName}
               onChange={(e) => setDisplayName(e.target.value)}
               disabled={saving}

@@ -12,12 +12,24 @@ export type User = {
 
 export type VoteDirection = "up" | "down" | null
 
+export type ProjectImage = {
+  id: string
+  projectId: string
+  imageUrl: string
+  altText?: string
+  displayOrder: number
+  isThumbnail: boolean
+  createdAt: string
+  updatedAt: string
+}
+
 export type Project = {
   id: string
   title: string
   shortDescription: string
   fullDescription: string
-  thumbnailUrl: string
+  thumbnailUrl: string // Keep for backward compatibility
+  images?: ProjectImage[] // New multiple images
   mediaUrl?: string
   codeEmbedUrl?: string
   author: User

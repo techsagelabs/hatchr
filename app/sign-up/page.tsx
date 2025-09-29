@@ -19,9 +19,79 @@ export default function SignUpPage() {
   const [username, setUsername] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [usernameError, setUsernameError] = useState('')
+  const [usernameChecking, setUsernameChecking] = useState(false)
   const { signUp } = useAuth()
   const router = useRouter()
   const supabase = createClient()
+
+  // Username validation with real-time feedback
+  const validateUsername = async (value: string) => {
+    if (!value) {
+      setUsernameError('Username is required')
+      return false
+    }
+    
+    if (value.length < 3) {
+      setUsernameError('Username must be at least 3 characters')
+      return false
+    }
+    
+    if (value.length > 30) {
+      setUsernameError('Username must be less than 30 characters')
+      return false
+    }
+    
+    if (!/^[a-zA-Z0-9_]+$/.test(value)) {
+      setUsernameError('Username can only contain letters, numbers, and underscores')
+      return false
+    }
+
+    // Check availability (debounced)
+    setUsernameChecking(true)
+    try {
+      const response = await fetch('/api/user/check-username', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: value.toLowerCase() }),
+      })
+
+      const data = await response.json()
+      
+      if (!response.ok) {
+        setUsernameError(data.message || 'Failed to validate username')
+        return false
+      }
+
+      if (!data.available) {
+        setUsernameError('Username is already taken')
+        return false
+      }
+
+      setUsernameError('')
+      return true
+    } catch (error) {
+      setUsernameError('Failed to check username availability')
+      return false
+    } finally {
+      setUsernameChecking(false)
+    }
+  }
+
+  const handleUsernameChange = (value: string) => {
+    // Clean input
+    const cleaned = value.toLowerCase().replace(/[^a-zA-Z0-9_]/g, '')
+    setUsername(cleaned)
+    
+    // Reset error
+    setUsernameError('')
+    
+    // Validate after a short delay
+    if (cleaned) {
+      const timeoutId = setTimeout(() => validateUsername(cleaned), 500)
+      return () => clearTimeout(timeoutId)
+    }
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -33,6 +103,17 @@ export default function SignUpPage() {
 
     if (password.length < 6) {
       toast.error('Password must be at least 6 characters long')
+      return
+    }
+
+    if (usernameError || usernameChecking) {
+      toast.error('Please fix username issues before continuing')
+      return
+    }
+
+    // Final username validation
+    const isUsernameValid = await validateUsername(username)
+    if (!isUsernameValid) {
       return
     }
 
@@ -88,16 +169,33 @@ export default function SignUpPage() {
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="username">Username</Label>
-              <Input
-                id="username"
-                type="text"
-                placeholder="Choose a username"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                required
-                disabled={loading}
-              />
+              <Label htmlFor="username">Username <span className="text-red-500">*</span></Label>
+              <div className="relative">
+                <Input
+                  id="username"
+                  type="text"
+                  placeholder="your_username"
+                  value={username}
+                  onChange={(e) => handleUsernameChange(e.target.value)}
+                  required
+                  disabled={loading}
+                  className={usernameError ? "border-red-500" : usernameChecking ? "border-yellow-500" : ""}
+                />
+                {usernameChecking && (
+                  <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-yellow-600"></div>
+                  </div>
+                )}
+              </div>
+              {usernameError && (
+                <p className="text-sm text-red-500">{usernameError}</p>
+              )}
+              {!usernameError && username && !usernameChecking && (
+                <p className="text-sm text-green-600">✓ Username is available</p>
+              )}
+              <p className="text-xs text-muted-foreground">
+                3-30 characters, letters, numbers, and underscores only
+              </p>
             </div>
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>

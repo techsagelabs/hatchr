@@ -4,7 +4,8 @@ import { createServerSupabaseClient } from "./supabase"
 export type UserProfile = {
   id: string
   userId: string
-  displayName?: string | null
+  username: string // Unique username for the user
+  displayName?: string | null // Full name or display name
   bio?: string | null
   website?: string | null
   twitter?: string | null
@@ -18,6 +19,7 @@ export type UserProfile = {
 }
 
 export type UserProfileUpdate = {
+  username?: string // Allow username updates with uniqueness validation
   displayName?: string
   bio?: string
   website?: string
@@ -111,11 +113,31 @@ export async function updateUserProfile(updates: UserProfileUpdate): Promise<Use
 
     const supabase = await createServerSupabaseClient()
     
+    // If username is being updated, check for uniqueness first
+    if (updates.username !== undefined) {
+      const { data: existingUser, error: checkError } = await supabase
+        .from('user_profiles')
+        .select('id')
+        .eq('username', updates.username)
+        .neq('user_id', user.id) // Exclude current user
+        .single()
+
+      if (checkError && checkError.code !== 'PGRST116') {
+        console.error('Error checking username uniqueness:', checkError)
+        throw new Error('Failed to validate username')
+      }
+
+      if (existingUser) {
+        throw new Error('Username is already taken')
+      }
+    }
+    
     const updateData: any = {
       updated_at: new Date().toISOString()
     }
 
     // Map the updates to database column names
+    if (updates.username !== undefined) updateData.username = updates.username
     if (updates.displayName !== undefined) updateData.display_name = updates.displayName
     if (updates.bio !== undefined) updateData.bio = updates.bio
     if (updates.website !== undefined) updateData.website = updates.website
@@ -197,6 +219,7 @@ function formatProfile(dbRow: any): UserProfile {
   return {
     id: dbRow.id,
     userId: dbRow.user_id,
+    username: dbRow.username || dbRow.display_name || 'user', // Fallback to display_name for existing users
     displayName: dbRow.display_name,
     bio: dbRow.bio,
     website: dbRow.website,
