@@ -213,19 +213,57 @@ export async function POST(
     const adminClient = createAdminClient()
     await updateProjectVoteCounts(context, adminClient)
 
+    // Fetch the updated project data
+    const { data: updatedProject, error: projectError } = await adminClient
+      .from('projects')
+      .select('*')
+      .eq('id', projectId)
+      .single()
+
+    if (projectError) {
+      console.error('[Vote] Failed to fetch updated project:', projectError)
+      // Return basic success response if project fetch fails
+      return NextResponse.json({
+        success: true,
+        message: 'Vote recorded but project data unavailable',
+        meta: { method, duration_ms: Date.now() - startTime }
+      })
+    }
+
+    // Fetch the user's current vote for this project
+    const { data: userCurrentVote, error: userVoteError } = await adminClient
+      .from('votes')
+      .select('vote_type')
+      .eq('project_id', projectId)
+      .eq('user_id', context.userId)
+      .single()
+
+    if (userVoteError && userVoteError.code !== 'PGRST116') {
+      console.error('[Vote] Failed to fetch user vote:', userVoteError)
+    }
+
+    // Transform project data to match frontend expectations
+    const projectWithVotes = {
+      ...updatedProject,
+      votes: {
+        up: updatedProject.upvotes || 0,
+        down: updatedProject.downvotes || 0,
+        net: updatedProject.net_votes || 0
+      },
+      userVote: userCurrentVote?.vote_type || null
+    }
+
     const duration = Date.now() - startTime
 
-    return NextResponse.json({
-      success: true,
-      data: voteData,
-      meta: {
-        method,
-        duration_ms: duration,
-        user_id: context.userId,
-        project_id: projectId,
-        vote_type: direction
-      }
+    console.log(`[Vote] Returning updated project data:`, {
+      projectId,
+      votes: projectWithVotes.votes,
+      userVote: projectWithVotes.userVote,
+      method,
+      duration_ms: duration
     })
+
+    return NextResponse.json(projectWithVotes)
 
   } catch (error: any) {
     const duration = Date.now() - startTime

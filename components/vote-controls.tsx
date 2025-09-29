@@ -115,8 +115,32 @@ export function VoteControls({
         throw new Error(errorData.error || `HTTP ${res.status}`)
       }
       
-      const fresh = (await res.json()) as ProjectWithUserVote
+      const responseData = await res.json()
+      console.log('✅ Vote response received:', responseData)
+      
+      // Validate the response structure
+      if (!responseData || typeof responseData !== 'object') {
+        console.error('❌ Invalid response format:', responseData)
+        throw new Error('Invalid response format from server')
+      }
+      
+      // Handle the new API response format
+      let fresh: ProjectWithUserVote
+      if (responseData.success && responseData.data) {
+        // Handle the old format or error responses
+        fresh = data // Keep current data since we can't process the response
+        console.warn('⚠️ Received old API format, keeping current data')
+      } else if (responseData.votes && responseData.id) {
+        // Handle the new project format
+        fresh = responseData as ProjectWithUserVote
+        console.log('✅ Using new project response format')
+      } else {
+        console.error('❌ Unrecognized response format:', responseData)
+        throw new Error('Unrecognized response format')
+      }
+      
       await mutate(fresh, false)
+      console.log('✅ Vote UI updated successfully')
       // Real-time subscriptions will handle global updates automatically
     } catch (error) {
       console.error('Error voting:', error)
