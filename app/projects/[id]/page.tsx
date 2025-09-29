@@ -59,7 +59,7 @@ export default async function ProjectDetail({ params }: { params: Promise<{ id: 
             <img
               src={project.thumbnailUrl}
               alt={`${project.title} thumbnail large`}
-              className="w-full rounded-md border object-cover"
+              className="w-full rounded-md border object-contain"
               style={{ aspectRatio: '16/9' }}
               loading="lazy"
             />
@@ -71,7 +71,8 @@ export default async function ProjectDetail({ params }: { params: Promise<{ id: 
               alt={`${project.title} thumbnail large`}
               width={640}
               height={360}
-              className="w-full rounded-md border object-cover"
+              className="w-full rounded-md border object-contain"
+              style={{ aspectRatio: '16/9' }}
               priority={true}
               placeholder="blur"
               blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCdABmX/9k="

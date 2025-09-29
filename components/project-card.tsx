@@ -135,7 +135,7 @@ export function ProjectCard({ project }: { project: ProjectWithUserVote }) {
               <img
                 src={mediaSrc}
                 alt={`${project.title} preview`}
-                className="block h-auto w-full object-cover"
+                className="block h-auto w-full object-contain"
                 style={{ aspectRatio: '16/9' }}
                 loading="lazy"
                 onError={(e) => {
@@ -156,7 +156,8 @@ export function ProjectCard({ project }: { project: ProjectWithUserVote }) {
                 alt={`${project.title} preview`}
                 width={640}
                 height={360}
-                className="block h-auto w-full object-cover"
+                className="block h-auto w-full object-contain"
+                style={{ aspectRatio: '16/9' }}
                 loading="lazy"
                 placeholder="blur"
                 blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCdABmX/9k="
