@@ -1068,6 +1068,11 @@ SELECT * FROM auth.users WHERE id = auth.uid();
 - 🔄 **Media Reordering**: Reorder images and videos to change display order during upload
 - 🏠 **Home Page Carousel**: Project cards on home page now display media carousels for multi-image projects
 
+#### **Bug Fixes (Latest)**
+- 🐛 **Fixed**: Carousel navigation buttons not working on home page (removed Link wrapper interference)
+- 🐛 **Fixed**: Video upload MIME type error (added stopPropagation to prevent parent click handlers)
+- 📝 **Added**: Guide for configuring Supabase Storage to accept video uploads
+
 #### **Technical Implementation**
 - **Files Modified**:
   - `components/ui/multi-image-upload.tsx`: Enhanced to accept and handle video uploads

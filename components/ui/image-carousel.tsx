@@ -175,7 +175,10 @@ export function ImageCarousel({
             variant="secondary"
             size="sm"
             className="absolute left-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity"
-            onClick={prevImage}
+            onClick={(e) => {
+              e.stopPropagation()
+              prevImage()
+            }}
           >
             <ChevronLeft className="h-4 w-4" />
           </Button>
@@ -184,7 +187,10 @@ export function ImageCarousel({
             variant="secondary"
             size="sm"
             className="absolute right-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity"
-            onClick={nextImage}
+            onClick={(e) => {
+              e.stopPropagation()
+              nextImage()
+            }}
           >
             <ChevronRight className="h-4 w-4" />
           </Button>
@@ -195,7 +201,10 @@ export function ImageCarousel({
               variant="secondary"
               size="sm"
               className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
-              onClick={() => setIsFullscreen(true)}
+              onClick={(e) => {
+                e.stopPropagation()
+                setIsFullscreen(true)
+              }}
             >
               <Maximize2 className="h-4 w-4" />
             </Button>
@@ -226,7 +235,10 @@ export function ImageCarousel({
                     ? "border-blue-500 ring-2 ring-blue-200" 
                     : "border-gray-200 hover:border-gray-300"
                 )}
-                onClick={() => goToImage(index)}
+                onClick={(e) => {
+                  e.stopPropagation()
+                  goToImage(index)
+                }}
               >
                 {image.mediaType === 'video' ? (
                   <video

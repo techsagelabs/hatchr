@@ -128,60 +128,64 @@ export function ProjectCard({ project }: { project: ProjectWithUserVote }) {
         </Link>
 
         {/* Media */}
-        <Link href={`/projects/${project.id}`} aria-label={`Open ${project.title}`}>
-          <div className="mt-3 overflow-hidden rounded-xl border bg-muted">
-            {/* Show carousel if multiple images exist */}
-            {project.images && project.images.length > 1 ? (
+        <div className="mt-3 overflow-hidden rounded-xl border bg-muted">
+          {/* Show carousel if multiple images exist - not wrapped in Link to allow navigation */}
+          {project.images && project.images.length > 1 ? (
+            <div className="cursor-pointer" onClick={() => router.push(`/projects/${project.id}`)}>
               <ImageCarousel 
                 images={project.images} 
                 showThumbnails={false}
                 className="rounded-none border-0"
               />
-            ) : videoUrl ? (
-              <video src={videoUrl} controls preload="metadata" className="block h-auto w-full" />
-            ) : mediaSrc?.includes('zjappsarpwtbdvgdrwhc.supabase.co') ? (
-              <img
-                src={mediaSrc}
-                alt={`${project.title} preview`}
-                className="block h-auto w-full object-contain"
-                style={{ aspectRatio: '16/9' }}
-                loading="lazy"
-                onError={(e) => {
-                  console.log('🖼️ Image load error for project:', project.title, {
-                    originalSrc: mediaSrc,
-                    projectThumbnailUrl: project.thumbnailUrl,
-                    fallbackSrc: e.currentTarget.src
-                  })
-                  e.currentTarget.onerror = null
-                  e.currentTarget.src = "/image---video.png"
-                }}
-              />
-            ) : (
-              <Image
-                src={
-                  mediaSrc || "/placeholder.svg?height=360&width=640&query=image%20%2F%20video" || "/placeholder.svg"
-                }
-                alt={`${project.title} preview`}
-                width={640}
-                height={360}
-                className="block h-auto w-full object-contain"
-                style={{ aspectRatio: '16/9' }}
-                loading="lazy"
-                placeholder="blur"
-                blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCdABmX/9k="
-                onError={(e) => {
-                  console.log('🖼️ Image load error for project:', project.title, {
-                    originalSrc: mediaSrc,
-                    projectThumbnailUrl: project.thumbnailUrl,
-                    fallbackSrc: e.currentTarget.src
-                  })
-                  e.currentTarget.onerror = null
-                  e.currentTarget.src = "/image---video.png"
-                }}
-              />
-            )}
-          </div>
-        </Link>
+            </div>
+          ) : (
+            <Link href={`/projects/${project.id}`} aria-label={`Open ${project.title}`}>
+              {videoUrl ? (
+                <video src={videoUrl} controls preload="metadata" className="block h-auto w-full" />
+              ) : mediaSrc?.includes('zjappsarpwtbdvgdrwhc.supabase.co') ? (
+                <img
+                  src={mediaSrc}
+                  alt={`${project.title} preview`}
+                  className="block h-auto w-full object-contain"
+                  style={{ aspectRatio: '16/9' }}
+                  loading="lazy"
+                  onError={(e) => {
+                    console.log('🖼️ Image load error for project:', project.title, {
+                      originalSrc: mediaSrc,
+                      projectThumbnailUrl: project.thumbnailUrl,
+                      fallbackSrc: e.currentTarget.src
+                    })
+                    e.currentTarget.onerror = null
+                    e.currentTarget.src = "/image---video.png"
+                  }}
+                />
+              ) : (
+                <Image
+                  src={
+                    mediaSrc || "/placeholder.svg?height=360&width=640&query=image%20%2F%20video" || "/placeholder.svg"
+                  }
+                  alt={`${project.title} preview`}
+                  width={640}
+                  height={360}
+                  className="block h-auto w-full object-contain"
+                  style={{ aspectRatio: '16/9' }}
+                  loading="lazy"
+                  placeholder="blur"
+                  blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCdABmX/9k="
+                  onError={(e) => {
+                    console.log('🖼️ Image load error for project:', project.title, {
+                      originalSrc: mediaSrc,
+                      projectThumbnailUrl: project.thumbnailUrl,
+                      fallbackSrc: e.currentTarget.src
+                    })
+                    e.currentTarget.onerror = null
+                    e.currentTarget.src = "/image---video.png"
+                  }}
+                />
+              )}
+            </Link>
+          )}
+        </div>
 
         {/* Actions row */}
         <div className="mt-4 flex items-center justify-between">
