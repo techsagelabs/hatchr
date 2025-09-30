@@ -24,6 +24,9 @@ export function ImageCarousel({
 }: ImageCarouselProps) {
   const [currentIndex, setCurrentIndex] = useState(0)
   const [isFullscreen, setIsFullscreen] = useState(false)
+  const [touchStart, setTouchStart] = useState<number | null>(null)
+  const [touchEnd, setTouchEnd] = useState<number | null>(null)
+  const [isSwiping, setIsSwiping] = useState(false)
 
   // Sort images by display order, with thumbnail first
   const sortedImages = [...images].sort((a, b) => {
@@ -42,6 +45,38 @@ export function ImageCarousel({
 
   const goToImage = (index: number) => {
     setCurrentIndex(index)
+  }
+
+  // Minimum swipe distance (in px) to trigger navigation
+  const minSwipeDistance = 50
+
+  const onTouchStart = (e: React.TouchEvent) => {
+    setTouchEnd(null) // Reset touchEnd
+    setTouchStart(e.targetTouches[0].clientX)
+    setIsSwiping(true)
+  }
+
+  const onTouchMove = (e: React.TouchEvent) => {
+    setTouchEnd(e.targetTouches[0].clientX)
+  }
+
+  const onTouchEnd = () => {
+    if (!touchStart || !touchEnd) {
+      setIsSwiping(false)
+      return
+    }
+    
+    const distance = touchStart - touchEnd
+    const isLeftSwipe = distance > minSwipeDistance
+    const isRightSwipe = distance < -minSwipeDistance
+
+    if (isLeftSwipe) {
+      nextImage()
+    } else if (isRightSwipe) {
+      prevImage()
+    }
+    
+    setIsSwiping(false)
   }
 
   // Auto-play functionality
@@ -95,7 +130,16 @@ export function ImageCarousel({
     // Single media display
     return (
       <div className={cn("relative", className)}>
-        <div className="aspect-video relative rounded-md overflow-hidden group">
+        <div 
+          className={cn(
+            "aspect-video relative rounded-md overflow-hidden group",
+            "touch-pan-y select-none"
+          )}
+          onTouchStart={onTouchStart}
+          onTouchMove={onTouchMove}
+          onTouchEnd={onTouchEnd}
+          style={{ touchAction: 'pan-y' }}
+        >
           {sortedImages[0].mediaType === 'video' ? (
             <video
               src={sortedImages[0].imageUrl}
@@ -144,7 +188,17 @@ export function ImageCarousel({
       {/* Main Carousel */}
       <div className={cn("relative", className)}>
         {/* Main Media Display */}
-        <div className="aspect-video relative rounded-md overflow-hidden group bg-muted">
+        <div 
+          className={cn(
+            "aspect-video relative rounded-md overflow-hidden group bg-muted",
+            "touch-pan-y select-none cursor-grab active:cursor-grabbing",
+            isSwiping && "transition-none"
+          )}
+          onTouchStart={onTouchStart}
+          onTouchMove={onTouchMove}
+          onTouchEnd={onTouchEnd}
+          style={{ touchAction: 'pan-y' }}
+        >
           {currentImage.mediaType === 'video' ? (
             <video
               src={currentImage.imageUrl}

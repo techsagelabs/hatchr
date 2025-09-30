@@ -43,6 +43,14 @@ export function MultiImageUpload({
   const uploadImage = async (file: File): Promise<string> => {
     if (!user) throw new Error('Authentication required')
 
+    // Log upload attempt
+    console.log('📤 Starting upload:', {
+      fileName: file.name,
+      fileType: file.type,
+      fileSize: `${(file.size / 1024 / 1024).toFixed(2)} MB`,
+      bucket: 'project-assets'
+    })
+
     // Create a unique filename
     const fileExt = file.name.split('.').pop()
     const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`
@@ -60,9 +68,17 @@ export function MultiImageUpload({
       })
 
     if (uploadError) {
-      console.error('Upload error:', uploadError)
-      throw uploadError
+      console.error('❌ Upload failed:', {
+        error: uploadError,
+        message: uploadError.message,
+        statusCode: uploadError.statusCode,
+        filePath,
+        fileType: file.type
+      })
+      throw new Error(`Upload failed: ${uploadError.message}`)
     }
+
+    console.log('✅ Upload successful:', uploadData)
 
     // Get public URL
     const { data: urlData } = supabaseClient.storage
@@ -72,6 +88,8 @@ export function MultiImageUpload({
     if (!urlData?.publicUrl) {
       throw new Error('Failed to get public URL')
     }
+
+    console.log('✅ Got public URL:', urlData.publicUrl)
 
     return urlData.publicUrl
   }

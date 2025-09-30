@@ -1068,15 +1068,17 @@ SELECT * FROM auth.users WHERE id = auth.uid();
 - 🔄 **Media Reordering**: Reorder images and videos to change display order during upload
 - 🏠 **Home Page Carousel**: Project cards on home page now display media carousels for multi-image projects
 
-#### **Bug Fixes (Latest)**
+#### **Bug Fixes & Enhancements (Latest)**
 - 🐛 **Fixed**: Carousel navigation buttons not working on home page (removed Link wrapper interference)
-- 🐛 **Fixed**: Video upload MIME type error (added stopPropagation to prevent parent click handlers)
+- 🐛 **Fixed**: Video upload MIME type error (Supabase Storage configuration)
+- ✨ **Enhanced**: Added touch swipe support for mobile carousel navigation
 - 📝 **Added**: Guide for configuring Supabase Storage to accept video uploads
+- 📱 **Added**: Native touch gestures (swipe left/right) for mobile users
 
 #### **Technical Implementation**
 - **Files Modified**:
   - `components/ui/multi-image-upload.tsx`: Enhanced to accept and handle video uploads
-  - `components/ui/image-carousel.tsx`: Updated to render videos with native controls
+  - `components/ui/image-carousel.tsx`: Updated with video rendering, swipe gestures, and touch events
   - `components/project-card.tsx`: Added carousel display on home page for multi-media projects
   - `components/forms/submit-project-form.tsx`: Integrated `MultiImageUpload` with video support
   - `lib/types.ts`: Added `mediaType` field to `ProjectImage` type
@@ -1102,6 +1104,9 @@ SELECT * FROM auth.users WHERE id = auth.uid();
 - ✨ View images in fullscreen mode on project pages
 - ✨ Videos play with native browser controls in carousel
 - ✨ Horizontal scrollable media gallery on home page cards
+- 📱 **Swipe left/right on mobile** to navigate through carousel images
+- 👆 **Touch-optimized gestures** with 50px minimum swipe distance
+- 🖱️ **Visual feedback** - cursor changes to grab/grabbing on desktop
 - ✨ Auto-detect media type (image vs video) during upload
 - ✨ Different file size limits: 5MB for images, 50MB for videos
 
