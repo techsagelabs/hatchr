@@ -23,6 +23,7 @@ export async function GET() {
     const { data: notifications, error } = await supabase
       .from('notifications')
       .select('*')
+      .eq('user_id', user.id) // 🔥 CRITICAL FIX: Only get current user's notifications
       .order('created_at', { ascending: false })
 
     if (error) {
@@ -79,6 +80,7 @@ export async function POST(req: Request) {
       .from('notifications')
       .update({ is_read: true })
       .in('id', ids)
+      .eq('user_id', user.id) // 🔒 SECURITY: Only mark current user's notifications as read
     
     if (error) {
         console.error('Error marking notifications as read:', error)
