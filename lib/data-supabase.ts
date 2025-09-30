@@ -2,7 +2,7 @@ import { getCurrentUser } from "./auth"
 import { createClient as createServerSupabaseClient } from '@/utils/supabase/server'
 import { createServiceSupabaseClient } from "./supabase-service"
 import { type Database } from "./supabase"
-import type { Comment, Project, ProjectWithUserVote, User, VoteDirection } from "./types"
+import type { Comment, Project, ProjectWithUserVote, User, VoteDirection, ProjectImage } from "./types"
 
 type ProjectRow = Database['public']['Tables']['projects']['Row']
 type CommentRow = Database['public']['Tables']['comments']['Row']
@@ -42,7 +42,7 @@ async function getUserPreferredAvatar(supabase: any, userId: string, fallbackAva
   return fallbackAvatarUrl || undefined
 }
 
-// Convert database row to Project type (with avatar preference handling)
+// Convert database row to Project type (with avatar preference handling and images)
 async function dbProjectToProject(row: ProjectRow, supabase?: any): Promise<Project> {
   let authorAvatarUrl = row.author_avatar_url || undefined
   
@@ -51,12 +51,41 @@ async function dbProjectToProject(row: ProjectRow, supabase?: any): Promise<Proj
     authorAvatarUrl = await getUserPreferredAvatar(supabase, row.author_id, row.author_avatar_url)
   }
   
+  // Fetch project images if supabase client is provided
+  let images: ProjectImage[] | undefined = undefined
+  if (supabase) {
+    try {
+      const { data: imageRows, error: imagesError } = await supabase
+        .from('project_images')
+        .select('*')
+        .eq('project_id', row.id)
+        .order('display_order', { ascending: true })
+      
+      if (!imagesError && imageRows && imageRows.length > 0) {
+        images = imageRows.map((img: any) => ({
+          id: img.id,
+          projectId: img.project_id,
+          imageUrl: img.image_url,
+          altText: img.alt_text || undefined,
+          displayOrder: img.display_order,
+          isThumbnail: img.is_thumbnail,
+          createdAt: img.created_at,
+          updatedAt: img.updated_at,
+        }))
+      }
+    } catch (error) {
+      console.warn(`Failed to fetch images for project ${row.id}:`, error)
+      // Don't fail the whole operation, just continue without images
+    }
+  }
+  
   return {
     id: row.id,
     title: row.title,
     shortDescription: row.short_description,
     fullDescription: row.full_description,
     thumbnailUrl: row.thumbnail_url,
+    images, // Include images if fetched
     mediaUrl: row.media_url || undefined,
     codeEmbedUrl: row.code_embed_url || undefined,
     author: {
@@ -360,6 +389,12 @@ export async function createProject(input: {
   shortDescription: string
   fullDescription: string
   thumbnailUrl: string
+  images?: Array<{
+    url: string
+    altText?: string
+    displayOrder: number
+    isThumbnail: boolean
+  }>
   mediaUrl?: string
   codeEmbedUrl?: string
 }): Promise<ProjectWithUserVote | null> {
@@ -411,6 +446,36 @@ export async function createProject(input: {
     }
 
     console.log('Project created successfully:', project.id)
+
+    // Insert project images if provided
+    if (input.images && input.images.length > 0) {
+      console.log(`Inserting ${input.images.length} images for project ${project.id}`)
+      
+      const imageInserts = input.images.map((img) => ({
+        project_id: project.id,
+        image_url: img.url,
+        alt_text: img.altText || null,
+        display_order: img.displayOrder,
+        is_thumbnail: img.isThumbnail,
+      }))
+
+      const { error: imagesError } = await supabase
+        .from('project_images')
+        .insert(imageInserts)
+
+      if (imagesError) {
+        console.error('Error inserting project images:', {
+          error: imagesError.message,
+          code: imagesError.code,
+          details: imagesError.details,
+          projectId: project.id
+        })
+        // Don't fail the whole operation if images insert fails
+        // The project is already created with thumbnail_url as fallback
+      } else {
+        console.log('Project images inserted successfully')
+      }
+    }
 
     return {
       ...(await dbProjectToProject(project, supabase)),

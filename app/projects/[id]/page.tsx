@@ -7,6 +7,7 @@ import { VoteControls } from "@/components/vote-controls"
 import { Embed } from "@/components/embed"
 import { CommentThread } from "@/components/comment-thread"
 import { ProjectActions } from "@/components/project-actions"
+import { ImageCarousel } from "@/components/ui/image-carousel"
 
 export default async function ProjectDetail({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -55,7 +56,14 @@ export default async function ProjectDetail({ params }: { params: Promise<{ id: 
         </header>
 
         <section className="mt-6 space-y-4">
-          {project.thumbnailUrl?.includes('zjappsarpwtbdvgdrwhc.supabase.co') ? (
+          {/* Show image carousel if multiple images exist, otherwise show single thumbnail */}
+          {project.images && project.images.length > 0 ? (
+            <ImageCarousel 
+              images={project.images} 
+              showThumbnails={project.images.length > 1}
+              className="rounded-md border overflow-hidden"
+            />
+          ) : project.thumbnailUrl?.includes('zjappsarpwtbdvgdrwhc.supabase.co') ? (
             <img
               src={project.thumbnailUrl}
               alt={`${project.title} thumbnail large`}

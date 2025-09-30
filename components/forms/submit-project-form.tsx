@@ -8,13 +8,13 @@ import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
 import { useRouter } from "next/navigation"
-import { ImageUpload } from "@/components/ui/image-upload"
+import { MultiImageUpload, type ImageItem } from "@/components/ui/multi-image-upload"
 
 export function SubmitProjectForm() {
   const [title, setTitle] = useState("")
   const [shortDescription, setShortDescription] = useState("")
   const [fullDescription, setFullDescription] = useState("")
-  const [thumbnailUrl, setThumbnailUrl] = useState("")
+  const [images, setImages] = useState<ImageItem[]>([])
   const [mediaUrl, setMediaUrl] = useState("")
   const [codeEmbedUrl, setCodeEmbedUrl] = useState("")
   const [busy, setBusy] = useState(false)
@@ -22,9 +22,31 @@ export function SubmitProjectForm() {
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault()
-    if (!title || !shortDescription || !fullDescription || !thumbnailUrl) return
+    
+    // Validate required fields
+    if (!title || !shortDescription || !fullDescription) {
+      alert("Please fill in all required fields")
+      return
+    }
+    
+    if (images.length === 0) {
+      alert("Please upload at least one project image")
+      return
+    }
+    
     setBusy(true)
     try {
+      // Find the thumbnail image (first image marked as thumbnail, or first image if none marked)
+      const thumbnailImage = images.find(img => img.isThumbnail) || images[0]
+      
+      // Prepare images data for API
+      const imagesData = images.map((img, index) => ({
+        url: img.url,
+        altText: img.altText || `${title} - Image ${index + 1}`,
+        displayOrder: index,
+        isThumbnail: img.id === thumbnailImage.id
+      }))
+      
       const res = await fetch("/api/projects", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -32,7 +54,8 @@ export function SubmitProjectForm() {
           title,
           shortDescription,
           fullDescription,
-          thumbnailUrl,
+          thumbnailUrl: thumbnailImage.url, // Backward compatibility
+          images: imagesData, // New multi-image support
           mediaUrl: mediaUrl || undefined,
           codeEmbedUrl: codeEmbedUrl || undefined,
         }),
@@ -83,11 +106,12 @@ export function SubmitProjectForm() {
           className="min-h-[120px]"
         />
       </div>
-      <ImageUpload
-        label="Project thumbnail image"
-        value={thumbnailUrl}
-        onChange={setThumbnailUrl}
+      <MultiImageUpload
+        label="Project Images (up to 5)"
+        value={images}
+        onChange={setImages}
         disabled={busy}
+        maxImages={5}
         required
       />
       <div className="space-y-2">

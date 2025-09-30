@@ -257,11 +257,31 @@ CREATE TABLE notifications (
 );
 ```
 
+#### `project_images`
+```sql
+CREATE TABLE project_images (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  project_id UUID NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+  image_url TEXT NOT NULL,
+  alt_text TEXT,
+  display_order INTEGER NOT NULL DEFAULT 0,
+  is_thumbnail BOOLEAN DEFAULT FALSE,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Indexes for performance
+CREATE INDEX project_images_project_id_idx ON project_images(project_id);
+CREATE INDEX project_images_project_order_idx ON project_images(project_id, display_order);
+CREATE INDEX project_images_thumbnail_idx ON project_images(project_id, is_thumbnail) WHERE is_thumbnail = TRUE;
+```
+
 ### Row Level Security (RLS) Policies
 
 All tables implement comprehensive RLS policies to ensure data security:
 
 - **Projects**: Public read, authenticated insert/update/delete for owners
+- **Project Images**: Public read, authenticated insert/update/delete for project owners
 - **Votes**: Public read, authenticated insert/update/delete for own votes
 - **User Profiles**: Public read, authenticated insert/update for own profile
 - **Connections**: Restricted read to involved users, authenticated operations
@@ -591,8 +611,12 @@ $$;
 
 #### **2. Multi-Image Project Support (December 2025)**
 - **Database Schema**: Created `project_images` table for multiple images per project
-- **Image Carousel**: Built carousel component for project image display
+- **Image Carousel**: Built carousel component for project image display with navigation
 - **Storage Integration**: Enhanced Supabase storage handling for multiple images
+- **Submit Form**: Integrated multi-image upload with drag-to-reorder and thumbnail selection
+- **Project Display**: Horizontal scrollable gallery with swipe support and left/right navigation
+- **First Image as Thumbnail**: Automatically sets first image as project thumbnail
+- **Up to 5 Images**: Support for up to 5 images per project with visual ordering
 
 #### **3. Authentication System Improvements (December 2025)**
 - **Google OAuth**: Implemented Google Sign-In integration
@@ -608,15 +632,7 @@ $$;
 
 ### In Progress Features 🔄
 
-#### **1. Project Form Enhancement**
-- **Status**: Pending
-- **Description**: Modify project submission form to handle multiple image uploads
-- **Files**: `components/forms/submit-project-form.tsx`, `app/submit/page.tsx`
-
-#### **2. Project Display Enhancement**
-- **Status**: Pending  
-- **Description**: Update project display pages to show image carousel
-- **Files**: `app/projects/[id]/page.tsx`, `components/project-card.tsx`
+_No features currently in progress. All planned features have been completed._
 
 ### Removed/Disabled Features 🚫
 
@@ -1036,6 +1052,39 @@ SELECT * FROM auth.users WHERE id = auth.uid();
 
 ## Change Log
 
+### Version 1.2 (December 30, 2025)
+
+#### **New Features**
+- 🖼️ **Multi-Image Project Upload**: Users can now upload up to 5 images per project
+- 🎠 **Horizontal Image Gallery**: Projects display images in a beautiful horizontal scrollable carousel
+- 👆 **Swipe & Navigation**: Touch swipe support and left/right arrow button navigation
+- 🎯 **Thumbnail Selection**: Choose which image serves as the main project thumbnail
+- 📱 **Keyboard Navigation**: Arrow keys and Escape for fullscreen image viewing
+- 🔄 **Image Reordering**: Drag and drop images to change display order during upload
+
+#### **Technical Implementation**
+- **Files Modified**:
+  - `components/forms/submit-project-form.tsx`: Integrated `MultiImageUpload` component
+  - `app/api/projects/route.ts`: Added support for `images` array in project creation
+  - `lib/data-supabase.ts`: Enhanced `createProject` to persist images to `project_images` table
+  - `lib/data-supabase.ts`: Updated `dbProjectToProject` to fetch and attach images
+  - `app/projects/[id]/page.tsx`: Implemented `ImageCarousel` for project display
+  - `HATCHR_APPLICATION_DOCUMENTATION.md`: Documented multi-image feature
+
+#### **Database Changes**
+- ✅ `project_images` table already created with RLS policies
+- ✅ Automatic insertion of images during project creation
+- ✅ Support for thumbnail designation and display ordering
+- ✅ Backward compatibility maintained with `thumbnailUrl` field
+
+#### **User Experience**
+- ✨ Upload multiple images with visual feedback
+- ✨ Preview all images before submission
+- ✨ Set any image as main thumbnail
+- ✨ Reorder images with up/down buttons
+- ✨ Add alt text for accessibility
+- ✨ View images in fullscreen mode on project pages
+
 ### Version 1.1 (December 30, 2025)
 
 #### **Fixes and Improvements**
@@ -1093,9 +1142,11 @@ The technical implementation demonstrates best practices in:
 - Thorough documentation and change tracking
 
 **Next Steps**:
-- Complete multi-image project form implementation
-- Enhance project display with image carousel
+- ✅ ~~Complete multi-image project form implementation~~ **COMPLETED**
+- ✅ ~~Enhance project display with image carousel~~ **COMPLETED**
 - Continue production voting system optimization
+- Add video support to project media galleries
+- Implement project image editing functionality
 - Add more interactive features based on user feedback
 
 Hatchr continues to evolve as a robust, scalable platform with careful attention to user experience, security, and maintainable code architecture.
@@ -1103,5 +1154,5 @@ Hatchr continues to evolve as a robust, scalable platform with careful attention
 ---
 
 **Last Updated**: December 30, 2025  
-**Version**: 1.1  
-**Status**: Production deployment with enhanced authentication system and ongoing feature development
+**Version**: 1.2  
+**Status**: Production deployment with multi-image project support and enhanced authentication system

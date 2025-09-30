@@ -10,8 +10,15 @@ export async function POST(req: Request) {
     const body = await req.json()
     
     // Validate required fields
-    if (!body.title || !body.shortDescription || !body.fullDescription || !body.thumbnailUrl) {
+    if (!body.title || !body.shortDescription || !body.fullDescription) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 })
+    }
+    
+    // Validate images if provided (or fallback to thumbnailUrl)
+    if (!body.images || !Array.isArray(body.images) || body.images.length === 0) {
+      if (!body.thumbnailUrl) {
+        return NextResponse.json({ error: "At least one image is required" }, { status: 400 })
+      }
     }
     
     const p = await createProject({
@@ -19,6 +26,7 @@ export async function POST(req: Request) {
       shortDescription: body.shortDescription,
       fullDescription: body.fullDescription,
       thumbnailUrl: body.thumbnailUrl,
+      images: body.images, // New multi-image support
       mediaUrl: body.mediaUrl,
       codeEmbedUrl: body.codeEmbedUrl,
     })
