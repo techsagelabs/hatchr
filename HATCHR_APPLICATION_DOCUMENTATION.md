@@ -266,6 +266,7 @@ CREATE TABLE project_images (
   alt_text TEXT,
   display_order INTEGER NOT NULL DEFAULT 0,
   is_thumbnail BOOLEAN DEFAULT FALSE,
+  media_type TEXT DEFAULT 'image' CHECK (media_type IN ('image', 'video')),
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
@@ -274,6 +275,7 @@ CREATE TABLE project_images (
 CREATE INDEX project_images_project_id_idx ON project_images(project_id);
 CREATE INDEX project_images_project_order_idx ON project_images(project_id, display_order);
 CREATE INDEX project_images_thumbnail_idx ON project_images(project_id, is_thumbnail) WHERE is_thumbnail = TRUE;
+CREATE INDEX project_images_media_type_idx ON project_images(media_type);
 ```
 
 ### Row Level Security (RLS) Policies
@@ -609,14 +611,16 @@ $$;
 - **Username Validation**: Real-time username availability checking
 - **Profile Management**: Enhanced profile edit functionality
 
-#### **2. Multi-Image Project Support (December 2025)**
-- **Database Schema**: Created `project_images` table for multiple images per project
-- **Image Carousel**: Built carousel component for project image display with navigation
-- **Storage Integration**: Enhanced Supabase storage handling for multiple images
-- **Submit Form**: Integrated multi-image upload with drag-to-reorder and thumbnail selection
-- **Project Display**: Horizontal scrollable gallery with swipe support and left/right navigation
-- **First Image as Thumbnail**: Automatically sets first image as project thumbnail
-- **Up to 5 Images**: Support for up to 5 images per project with visual ordering
+#### **2. Multi-Media Project Support (December 2025)**
+- **Database Schema**: Created `project_images` table with `media_type` column for images and videos
+- **Media Carousel**: Built carousel component for multi-media display with navigation
+- **Video Support**: Upload and display videos (MP4, MOV, WebM) up to 50MB alongside images
+- **Storage Integration**: Enhanced Supabase storage handling for multiple media files
+- **Submit Form**: Integrated multi-media upload with reordering and thumbnail selection
+- **Project Display**: Horizontal scrollable gallery with swipe support and arrow navigation
+- **Home Page Cards**: Media carousels display on project cards when multiple files exist
+- **Auto-Detection**: Automatically detects and handles image vs video file types
+- **Up to 5 Files**: Support for up to 5 images/videos per project with visual ordering
 
 #### **3. Authentication System Improvements (December 2025)**
 - **Google OAuth**: Implemented Google Sign-In integration
@@ -1055,35 +1059,46 @@ SELECT * FROM auth.users WHERE id = auth.uid();
 ### Version 1.2 (December 30, 2025)
 
 #### **New Features**
-- 🖼️ **Multi-Image Project Upload**: Users can now upload up to 5 images per project
-- 🎠 **Horizontal Image Gallery**: Projects display images in a beautiful horizontal scrollable carousel
+- 🖼️ **Multi-Image & Video Upload**: Users can now upload up to 5 images/videos per project
+- 🎥 **Video Support**: Upload MP4, MOV, WebM videos (max 50MB) alongside images (max 5MB)
+- 🎠 **Horizontal Media Gallery**: Projects display media in a beautiful horizontal scrollable carousel
 - 👆 **Swipe & Navigation**: Touch swipe support and left/right arrow button navigation
-- 🎯 **Thumbnail Selection**: Choose which image serves as the main project thumbnail
-- 📱 **Keyboard Navigation**: Arrow keys and Escape for fullscreen image viewing
-- 🔄 **Image Reordering**: Drag and drop images to change display order during upload
+- 🎯 **Thumbnail Selection**: Choose which media file serves as the main project thumbnail
+- 📱 **Keyboard Navigation**: Arrow keys and Escape for fullscreen viewing
+- 🔄 **Media Reordering**: Reorder images and videos to change display order during upload
+- 🏠 **Home Page Carousel**: Project cards on home page now display media carousels for multi-image projects
 
 #### **Technical Implementation**
 - **Files Modified**:
-  - `components/forms/submit-project-form.tsx`: Integrated `MultiImageUpload` component
-  - `app/api/projects/route.ts`: Added support for `images` array in project creation
-  - `lib/data-supabase.ts`: Enhanced `createProject` to persist images to `project_images` table
-  - `lib/data-supabase.ts`: Updated `dbProjectToProject` to fetch and attach images
-  - `app/projects/[id]/page.tsx`: Implemented `ImageCarousel` for project display
-  - `HATCHR_APPLICATION_DOCUMENTATION.md`: Documented multi-image feature
+  - `components/ui/multi-image-upload.tsx`: Enhanced to accept and handle video uploads
+  - `components/ui/image-carousel.tsx`: Updated to render videos with native controls
+  - `components/project-card.tsx`: Added carousel display on home page for multi-media projects
+  - `components/forms/submit-project-form.tsx`: Integrated `MultiImageUpload` with video support
+  - `lib/types.ts`: Added `mediaType` field to `ProjectImage` type
+  - `lib/data-supabase.ts`: Enhanced to persist and fetch `mediaType` for each media file
+  - `app/projects/[id]/page.tsx`: Implemented `ImageCarousel` with video rendering
+  - `add-media-type-to-project-images.sql`: Database migration for media type support
+  - `HATCHR_APPLICATION_DOCUMENTATION.md`: Documented multi-media feature
 
 #### **Database Changes**
-- ✅ `project_images` table already created with RLS policies
-- ✅ Automatic insertion of images during project creation
+- ✅ `project_images` table with `media_type` column added
+- ✅ `media_type` column: TEXT field with CHECK constraint ('image' or 'video')
+- ✅ Automatic insertion of media files with type detection during project creation
 - ✅ Support for thumbnail designation and display ordering
 - ✅ Backward compatibility maintained with `thumbnailUrl` field
+- ✅ Index on `media_type` for efficient media type queries
 
 #### **User Experience**
-- ✨ Upload multiple images with visual feedback
-- ✨ Preview all images before submission
-- ✨ Set any image as main thumbnail
-- ✨ Reorder images with up/down buttons
-- ✨ Add alt text for accessibility
+- ✨ Upload multiple images and videos with visual feedback
+- ✨ Preview all media files before submission (video thumbnails shown)
+- ✨ Set any media file as main thumbnail
+- ✨ Reorder media files with up/down buttons
+- ✨ Add alt text/descriptions for accessibility
 - ✨ View images in fullscreen mode on project pages
+- ✨ Videos play with native browser controls in carousel
+- ✨ Horizontal scrollable media gallery on home page cards
+- ✨ Auto-detect media type (image vs video) during upload
+- ✨ Different file size limits: 5MB for images, 50MB for videos
 
 ### Version 1.1 (December 30, 2025)
 
@@ -1144,9 +1159,12 @@ The technical implementation demonstrates best practices in:
 **Next Steps**:
 - ✅ ~~Complete multi-image project form implementation~~ **COMPLETED**
 - ✅ ~~Enhance project display with image carousel~~ **COMPLETED**
+- ✅ ~~Add video support to project media galleries~~ **COMPLETED**
+- ✅ ~~Add scrollable carousel to home page project cards~~ **COMPLETED**
 - Continue production voting system optimization
-- Add video support to project media galleries
-- Implement project image editing functionality
+- Implement project media editing functionality (add/remove/reorder after submission)
+- Add video thumbnail generation for better previews
+- Implement video compression/optimization before upload
 - Add more interactive features based on user feedback
 
 Hatchr continues to evolve as a robust, scalable platform with careful attention to user experience, security, and maintainable code architecture.

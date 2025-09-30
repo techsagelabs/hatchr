@@ -69,6 +69,7 @@ async function dbProjectToProject(row: ProjectRow, supabase?: any): Promise<Proj
           altText: img.alt_text || undefined,
           displayOrder: img.display_order,
           isThumbnail: img.is_thumbnail,
+          mediaType: img.media_type || 'image',
           createdAt: img.created_at,
           updatedAt: img.updated_at,
         }))
@@ -394,6 +395,7 @@ export async function createProject(input: {
     altText?: string
     displayOrder: number
     isThumbnail: boolean
+    mediaType?: 'image' | 'video'
   }>
   mediaUrl?: string
   codeEmbedUrl?: string
@@ -457,6 +459,7 @@ export async function createProject(input: {
         alt_text: img.altText || null,
         display_order: img.displayOrder,
         is_thumbnail: img.isThumbnail,
+        media_type: img.mediaType || 'image',
       }))
 
       const { error: imagesError } = await supabase

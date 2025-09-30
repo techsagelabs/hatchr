@@ -30,7 +30,7 @@ export function SubmitProjectForm() {
     }
     
     if (images.length === 0) {
-      alert("Please upload at least one project image")
+      alert("Please upload at least one project image or video")
       return
     }
     
@@ -42,9 +42,10 @@ export function SubmitProjectForm() {
       // Prepare images data for API
       const imagesData = images.map((img, index) => ({
         url: img.url,
-        altText: img.altText || `${title} - Image ${index + 1}`,
+        altText: img.altText || `${title} - ${img.mediaType === 'video' ? 'Video' : 'Image'} ${index + 1}`,
         displayOrder: index,
-        isThumbnail: img.id === thumbnailImage.id
+        isThumbnail: img.id === thumbnailImage.id,
+        mediaType: img.mediaType || 'image'
       }))
       
       const res = await fetch("/api/projects", {

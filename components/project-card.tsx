@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/alert-dialog"
 import { ReportDialog } from "@/components/report-dialog"
 import { SignUpPromptModal } from "@/components/sign-up-prompt-modal"
+import { ImageCarousel } from "@/components/ui/image-carousel"
 
 function toUsernameSlug(name?: string) {
   if (!name) return "user"
@@ -129,7 +130,14 @@ export function ProjectCard({ project }: { project: ProjectWithUserVote }) {
         {/* Media */}
         <Link href={`/projects/${project.id}`} aria-label={`Open ${project.title}`}>
           <div className="mt-3 overflow-hidden rounded-xl border bg-muted">
-            {videoUrl ? (
+            {/* Show carousel if multiple images exist */}
+            {project.images && project.images.length > 1 ? (
+              <ImageCarousel 
+                images={project.images} 
+                showThumbnails={false}
+                className="rounded-none border-0"
+              />
+            ) : videoUrl ? (
               <video src={videoUrl} controls preload="metadata" className="block h-auto w-full" />
             ) : mediaSrc?.includes('zjappsarpwtbdvgdrwhc.supabase.co') ? (
               <img

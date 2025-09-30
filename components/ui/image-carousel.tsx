@@ -92,11 +92,18 @@ export function ImageCarousel({
   }
 
   if (sortedImages.length === 1) {
-    // Single image display
+    // Single media display
     return (
       <div className={cn("relative", className)}>
         <div className="aspect-video relative rounded-md overflow-hidden group">
-          {sortedImages[0].imageUrl.includes('supabase.co') ? (
+          {sortedImages[0].mediaType === 'video' ? (
+            <video
+              src={sortedImages[0].imageUrl}
+              controls
+              className="w-full h-full object-contain"
+              preload="metadata"
+            />
+          ) : sortedImages[0].imageUrl.includes('supabase.co') ? (
             <img
               src={sortedImages[0].imageUrl}
               alt={sortedImages[0].altText || 'Project image'}
@@ -114,15 +121,17 @@ export function ImageCarousel({
             />
           )}
           
-          {/* Fullscreen Button */}
-          <Button
-            variant="secondary"
-            size="sm"
-            className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
-            onClick={() => setIsFullscreen(true)}
-          >
-            <Maximize2 className="h-4 w-4" />
-          </Button>
+          {/* Fullscreen Button - hide for videos since they have their own controls */}
+          {sortedImages[0].mediaType !== 'video' && (
+            <Button
+              variant="secondary"
+              size="sm"
+              className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
+              onClick={() => setIsFullscreen(true)}
+            >
+              <Maximize2 className="h-4 w-4" />
+            </Button>
+          )}
         </div>
       </div>
     )
@@ -134,9 +143,16 @@ export function ImageCarousel({
     <>
       {/* Main Carousel */}
       <div className={cn("relative", className)}>
-        {/* Main Image Display */}
+        {/* Main Media Display */}
         <div className="aspect-video relative rounded-md overflow-hidden group bg-muted">
-          {currentImage.imageUrl.includes('supabase.co') ? (
+          {currentImage.mediaType === 'video' ? (
+            <video
+              src={currentImage.imageUrl}
+              controls
+              className="w-full h-full object-contain"
+              preload="metadata"
+            />
+          ) : currentImage.imageUrl.includes('supabase.co') ? (
             <img
               src={currentImage.imageUrl}
               alt={currentImage.altText || `Project image ${currentIndex + 1}`}
@@ -173,15 +189,17 @@ export function ImageCarousel({
             <ChevronRight className="h-4 w-4" />
           </Button>
 
-          {/* Fullscreen Button */}
-          <Button
-            variant="secondary"
-            size="sm"
-            className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
-            onClick={() => setIsFullscreen(true)}
-          >
-            <Maximize2 className="h-4 w-4" />
-          </Button>
+          {/* Fullscreen Button - hide for videos since they have their own controls */}
+          {currentImage.mediaType !== 'video' && (
+            <Button
+              variant="secondary"
+              size="sm"
+              className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
+              onClick={() => setIsFullscreen(true)}
+            >
+              <Maximize2 className="h-4 w-4" />
+            </Button>
+          )}
 
           {/* Image Counter */}
           <div className="absolute bottom-2 right-2 bg-black/50 text-white text-xs px-2 py-1 rounded">
@@ -210,7 +228,13 @@ export function ImageCarousel({
                 )}
                 onClick={() => goToImage(index)}
               >
-                {image.imageUrl.includes('supabase.co') ? (
+                {image.mediaType === 'video' ? (
+                  <video
+                    src={image.imageUrl}
+                    className="w-full h-full object-cover"
+                    preload="metadata"
+                  />
+                ) : image.imageUrl.includes('supabase.co') ? (
                   <img
                     src={image.imageUrl}
                     alt={image.altText || `Thumbnail ${index + 1}`}

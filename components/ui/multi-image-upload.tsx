@@ -15,6 +15,7 @@ export interface ImageItem {
   url: string
   altText?: string
   isThumbnail: boolean
+  mediaType?: 'image' | 'video' // Type of media
 }
 
 interface MultiImageUploadProps {
@@ -30,7 +31,7 @@ export function MultiImageUpload({
   value, 
   onChange, 
   disabled, 
-  label = "Project Images", 
+  label = "Project Images & Videos", 
   maxImages = 5,
   required 
 }: MultiImageUploadProps) {
@@ -92,14 +93,20 @@ export function MultiImageUpload({
       const newImages: ImageItem[] = []
 
       for (const file of files) {
-        // Validate file type
-        if (!file.type.startsWith('image/')) {
-          throw new Error(`${file.name} is not an image file`)
+        // Validate file type (accept image or video)
+        const isImage = file.type.startsWith('image/')
+        const isVideo = file.type.startsWith('video/')
+        
+        if (!isImage && !isVideo) {
+          throw new Error(`${file.name} is not an image or video file`)
         }
 
-        // Validate file size (max 5MB)
-        if (file.size > 5 * 1024 * 1024) {
-          throw new Error(`${file.name} is too large (max 5MB)`)
+        // Validate file size (max 50MB for videos, 5MB for images)
+        const maxSize = isVideo ? 50 * 1024 * 1024 : 5 * 1024 * 1024
+        const maxSizeLabel = isVideo ? '50MB' : '5MB'
+        
+        if (file.size > maxSize) {
+          throw new Error(`${file.name} is too large (max ${maxSizeLabel})`)
         }
 
         const url = await uploadImage(file)
@@ -107,7 +114,8 @@ export function MultiImageUpload({
           id: Date.now().toString() + Math.random().toString(36).substring(2),
           url,
           altText: file.name.split('.')[0],
-          isThumbnail: value.length === 0 && newImages.length === 0 // First image is thumbnail
+          isThumbnail: value.length === 0 && newImages.length === 0, // First media is thumbnail
+          mediaType: isVideo ? 'video' : 'image'
         })
       }
 
@@ -182,32 +190,32 @@ export function MultiImageUpload({
           )}
           onClick={() => !disabled && value.length < maxImages && fileInputRef.current?.click()}
         >
-          <input
-            ref={fileInputRef}
-            type="file"
-            multiple
-            accept="image/*"
-            onChange={handleFileChange}
-            disabled={disabled || uploading || value.length >= maxImages}
-            className="hidden"
-          />
+            <input
+                ref={fileInputRef}
+                type="file"
+                multiple
+                accept="image/*,video/*"
+                onChange={handleFileChange}
+                disabled={disabled || uploading || value.length >= maxImages}
+                className="hidden"
+              />
           
           {uploading ? (
             <div className="flex flex-col items-center gap-2">
               <LoadingSpinner size="lg" />
-              <p className="text-sm text-muted-foreground">Uploading images...</p>
+              <p className="text-sm text-muted-foreground">Uploading media...</p>
             </div>
           ) : (
             <div className="flex flex-col items-center gap-2">
               <Upload className="h-8 w-8 text-muted-foreground" />
               <p className="text-sm font-medium">
                 {value.length >= maxImages 
-                  ? `Maximum ${maxImages} images reached`
-                  : "Click to upload images"
+                  ? `Maximum ${maxImages} media files reached`
+                  : "Click to upload images or videos"
                 }
               </p>
               <p className="text-xs text-muted-foreground">
-                PNG, JPG, GIF up to 5MB each
+                Images: PNG, JPG, GIF (max 5MB) • Videos: MP4, MOV, WebM (max 50MB)
               </p>
             </div>
           )}
@@ -230,13 +238,21 @@ export function MultiImageUpload({
               )}
             >
               <div className="aspect-video relative">
-                <Image
-                  src={image.url}
-                  alt={image.altText || `Project image ${index + 1}`}
-                  fill
-                  className="object-cover"
-                  sizes="(max-width: 768px) 50vw, 33vw"
-                />
+                {image.mediaType === 'video' ? (
+                  <video
+                    src={image.url}
+                    className="w-full h-full object-cover"
+                    preload="metadata"
+                  />
+                ) : (
+                  <Image
+                    src={image.url}
+                    alt={image.altText || `Project image ${index + 1}`}
+                    fill
+                    className="object-cover"
+                    sizes="(max-width: 768px) 50vw, 33vw"
+                  />
+                )}
                 
                 {/* Overlay Controls */}
                 <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
@@ -266,7 +282,7 @@ export function MultiImageUpload({
                 {/* Thumbnail Badge */}
                 {image.isThumbnail && (
                   <div className="absolute top-2 left-2 bg-blue-500 text-white text-xs px-2 py-1 rounded">
-                    Main Image
+                    Main {image.mediaType === 'video' ? 'Video' : 'Image'}
                   </div>
                 )}
 
@@ -313,15 +329,16 @@ export function MultiImageUpload({
         </div>
       )}
 
-      {/* Instructions */}
-      {value.length > 0 && (
-        <div className="text-xs text-muted-foreground space-y-1">
-          <p>• The first image (marked as "Main Image") will be used as the project thumbnail</p>
-          <p>• Click "Set as Main" on any image to make it the thumbnail</p>
-          <p>• Use arrow buttons to reorder images</p>
-          <p>• Add descriptions for better accessibility</p>
-        </div>
-      )}
+          {/* Instructions */}
+          {value.length > 0 && (
+            <div className="text-xs text-muted-foreground space-y-1">
+              <p>• The first media file will be used as the project thumbnail</p>
+              <p>• Click "Set as Main" on any file to make it the thumbnail</p>
+              <p>• Use arrow buttons to reorder media files</p>
+              <p>• Add descriptions for better accessibility</p>
+              <p>• Videos will play in the carousel on project pages</p>
+            </div>
+          )}
     </div>
   )
 }

@@ -19,6 +19,7 @@ export type ProjectImage = {
   altText?: string
   displayOrder: number
   isThumbnail: boolean
+  mediaType?: 'image' | 'video' // Type of media (image or video)
   createdAt: string
   updatedAt: string
 }
