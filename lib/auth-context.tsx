@@ -4,6 +4,11 @@ import { createContext, useContext, useEffect, useState } from 'react'
 import { createClient } from '@/utils/supabase/client'
 import type { User } from '@supabase/supabase-js'
 
+// Load debug utilities in development
+if (process.env.NODE_ENV === 'development') {
+  import('@/lib/auth-debug')
+}
+
 interface AuthContextType {
   user: User | null
   loading: boolean
@@ -27,15 +32,36 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     const getUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser()
-      setUser(user)
-      setLoading(false)
+      try {
+        const { data: { user }, error } = await supabase.auth.getUser()
+        
+        if (process.env.NODE_ENV === 'development') {
+          console.log('🔐 Auth Check:', { 
+            user: user ? { id: user.id, email: user.email } : null, 
+            error: error?.message 
+          })
+        }
+        
+        setUser(user)
+        setLoading(false)
+      } catch (error) {
+        console.error('Auth initialization error:', error)
+        setUser(null)
+        setLoading(false)
+      }
     }
 
     getUser()
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
+        if (process.env.NODE_ENV === 'development') {
+          console.log('🔄 Auth State Change:', { 
+            event, 
+            user: session?.user ? { id: session.user.id, email: session.user.email } : null 
+          })
+        }
+        
         setUser(session?.user ?? null)
         setLoading(false)
       }
@@ -103,7 +129,31 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   const signOut = async () => {
-    await supabase.auth.signOut()
+    try {
+      // Sign out from Supabase (clears localStorage and cookies)
+      await supabase.auth.signOut()
+      
+      // Force clear any remaining auth state
+      setUser(null)
+      setLoading(false)
+      
+      // Clear localStorage manually as a fallback
+      if (typeof window !== 'undefined') {
+        // Clear any Supabase auth keys from localStorage
+        Object.keys(localStorage).forEach(key => {
+          if (key.startsWith('sb-') || key.includes('supabase')) {
+            localStorage.removeItem(key)
+          }
+        })
+      }
+      
+      console.log('✅ Successfully signed out and cleared auth state')
+    } catch (error) {
+      console.error('Error during sign out:', error)
+      // Even if sign out fails, clear local state
+      setUser(null)
+      setLoading(false)
+    }
   }
 
   const value = {

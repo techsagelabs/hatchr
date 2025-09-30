@@ -21,9 +21,8 @@ export async function createClient() {
             })
           } catch (error) {
             // The `setAll` method was called from a Server Component
-            // or during middleware execution. This can be ignored 
-            // if you have middleware refreshing user sessions.
-            console.warn('Failed to set cookies in server component:', error)
+            // This is expected and can be safely ignored in Next.js 15
+            // Middleware handles session refresh
           }
         },
       },
