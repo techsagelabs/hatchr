@@ -8,15 +8,10 @@ import { Button } from "@/components/ui/button"
 import { useEffect, useState } from "react"
 import { ModeToggle } from "@/components/mode-toggle"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import dynamic from "next/dynamic"
 import { RealtimeStatus } from "./realtime-status"
 import { useAuth } from "@/lib/auth-context"
 
-// ✅ OPTIMIZED: Lazy load notifications component (heavy with SWR, modals)
-const NotificationsBell = dynamic(() => import("./notifications-bell").then(mod => ({ default: mod.NotificationsBell })), {
-  ssr: false,
-  loading: () => <div className="w-10 h-10" />, // Placeholder to prevent layout shift
-})
+// Notifications component removed temporarily
 
 export function Navbar() {
   const router = useRouter()
@@ -63,7 +58,6 @@ export function Navbar() {
             <div className="w-24 h-10 bg-muted rounded animate-pulse" />
           ) : user ? (
             <>
-              <NotificationsBell />
               <Link href="/submit">
                 <Button variant="default" className="bg-orange-600 hover:bg-orange-700">
                   Submit Project
