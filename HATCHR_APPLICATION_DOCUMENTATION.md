@@ -1071,8 +1071,10 @@ SELECT * FROM auth.users WHERE id = auth.uid();
 #### **Bug Fixes & Enhancements (Latest)**
 - 🐛 **Fixed**: Carousel navigation buttons not working on home page (removed Link wrapper interference)
 - 🐛 **Fixed**: Video upload MIME type error (Supabase Storage configuration)
+- 🐛 **Fixed**: Google OAuth "refresh_token_not_found" error in production (added access_type=offline)
 - ✨ **Enhanced**: Added touch swipe support for mobile carousel navigation
 - 📝 **Added**: Guide for configuring Supabase Storage to accept video uploads
+- 📝 **Added**: Complete Google OAuth production configuration guide
 - 📱 **Added**: Native touch gestures (swipe left/right) for mobile users
 
 #### **Technical Implementation**
