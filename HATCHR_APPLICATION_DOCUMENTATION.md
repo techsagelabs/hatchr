@@ -1069,17 +1069,80 @@ SELECT * FROM auth.users WHERE id = auth.uid();
 - 🏠 **Home Page Carousel**: Project cards on home page now display media carousels for multi-image projects
 
 #### **Bug Fixes & Enhancements (Latest)**
+- 🐛 **Fixed**: Images cropped to 16:9 aspect ratio (removed forced aspect-video constraint, images now show fully)
 - 🐛 **Fixed**: Carousel navigation buttons not working on home page (removed Link wrapper interference)
 - 🐛 **Fixed**: Video upload MIME type error (Supabase Storage configuration)
 - 🐛 **Fixed**: Google OAuth "refresh_token_not_found" error in production (added access_type=offline)
 - 🐛 **Fixed**: Google OAuth "Database error saving new user" (added username column + auto-generation)
 - 🔇 **Removed**: User onboarding popup (disabled by user request)
+- ✨ **Enhanced**: Images now display at natural aspect ratio with full visibility
 - ✨ **Enhanced**: Added touch swipe support for mobile carousel navigation
 - ✨ **Enhanced**: Automatic username generation for OAuth users from email
 - 📝 **Added**: Guide for configuring Supabase Storage to accept video uploads
 - 📝 **Added**: Complete Google OAuth production configuration guide
 - 📝 **Added**: Database migration for OAuth user creation
 - 📱 **Added**: Native touch gestures (swipe left/right) for mobile users
+
+---
+
+### **2025-10-09: Image Display Fix - Natural Aspect Ratio**
+
+#### **Issue:**
+Project images were being cropped and not displaying fully. Images were forced into a 16:9 aspect ratio (`aspect-video` CSS class), causing:
+- Portrait images to be cropped on the sides
+- Tall images to be cut off at top/bottom
+- Only portions of images visible instead of full image
+
+#### **Root Cause:**
+1. **Image Carousel (`components/ui/image-carousel.tsx`):**
+   - Used `aspect-video` class on carousel container
+   - Forced all images into 16:9 ratio regardless of their natural dimensions
+
+2. **Project Card (`components/project-card.tsx`):**
+   - Had `style={{ aspectRatio: '16/9' }}` inline styles
+   - Constrained images to fixed ratio
+
+3. **Project Detail Page (`app/projects/[id]/page.tsx`):**
+   - Same fixed aspect ratio constraint issue
+
+#### **Solution:**
+**Changed image display to use natural aspect ratios:**
+
+1. **Removed forced aspect ratio constraints:**
+   ```tsx
+   // BEFORE: Fixed 16:9 ratio
+   <div className="aspect-video relative rounded-md overflow-hidden group">
+     <img className="w-full h-full object-contain" style={{ aspectRatio: '16/9' }} />
+   </div>
+
+   // AFTER: Natural aspect ratio
+   <div className="relative rounded-md overflow-hidden group">
+     <img className="w-full h-auto object-contain" />
+   </div>
+   ```
+
+2. **Updated Image component usage:**
+   ```tsx
+   // BEFORE: fill prop with forced ratio
+   <Image src={url} fill className="object-contain" />
+
+   // AFTER: Fixed dimensions with h-auto
+   <Image src={url} width={1200} height={800} className="w-full h-auto object-contain" />
+   ```
+
+3. **Files Modified:**
+   - `components/ui/image-carousel.tsx`: Removed `aspect-video` class, changed `h-full` to `h-auto`
+   - `components/project-card.tsx`: Removed `style={{ aspectRatio: '16/9' }}`
+   - `app/projects/[id]/page.tsx`: Removed aspect ratio constraints
+
+#### **Result:**
+✅ Images display at natural aspect ratio  
+✅ Full image visible (no cropping)  
+✅ Container adapts to image dimensions  
+✅ Works for portrait and landscape images  
+✅ Applies to home page, project cards, and detail pages
+
+---
 
 #### **Technical Implementation**
 - **Files Modified**:

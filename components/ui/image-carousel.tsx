@@ -132,7 +132,7 @@ export function ImageCarousel({
       <div className={cn("relative", className)}>
         <div 
           className={cn(
-            "aspect-video relative rounded-md overflow-hidden group",
+            "relative rounded-md overflow-hidden group",
             "touch-pan-y select-none"
           )}
           onTouchStart={onTouchStart}
@@ -144,22 +144,23 @@ export function ImageCarousel({
             <video
               src={sortedImages[0].imageUrl}
               controls
-              className="w-full h-full object-contain"
+              className="w-full h-auto object-contain"
               preload="metadata"
             />
           ) : sortedImages[0].imageUrl.includes('supabase.co') ? (
             <img
               src={sortedImages[0].imageUrl}
               alt={sortedImages[0].altText || 'Project image'}
-              className="w-full h-full object-contain"
+              className="w-full h-auto object-contain"
               loading="lazy"
             />
           ) : (
             <Image
               src={sortedImages[0].imageUrl}
               alt={sortedImages[0].altText || 'Project image'}
-              fill
-              className="object-contain"
+              width={1200}
+              height={800}
+              className="w-full h-auto object-contain"
               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
               priority={sortedImages[0].isThumbnail}
             />
@@ -190,7 +191,7 @@ export function ImageCarousel({
         {/* Main Media Display */}
         <div 
           className={cn(
-            "aspect-video relative rounded-md overflow-hidden group bg-muted",
+            "relative rounded-md overflow-hidden group bg-muted",
             "touch-pan-y select-none cursor-grab active:cursor-grabbing",
             isSwiping && "transition-none"
           )}
@@ -203,22 +204,23 @@ export function ImageCarousel({
             <video
               src={currentImage.imageUrl}
               controls
-              className="w-full h-full object-contain"
+              className="w-full h-auto object-contain"
               preload="metadata"
             />
           ) : currentImage.imageUrl.includes('supabase.co') ? (
             <img
               src={currentImage.imageUrl}
               alt={currentImage.altText || `Project image ${currentIndex + 1}`}
-              className="w-full h-full object-contain transition-opacity duration-300"
+              className="w-full h-auto object-contain transition-opacity duration-300"
               loading="lazy"
             />
           ) : (
             <Image
               src={currentImage.imageUrl}
               alt={currentImage.altText || `Project image ${currentIndex + 1}`}
-              fill
-              className="object-contain transition-opacity duration-300"
+              width={1200}
+              height={800}
+              className="w-full h-auto object-contain transition-opacity duration-300"
               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
               priority={currentIndex === 0}
             />
