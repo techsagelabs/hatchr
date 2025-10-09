@@ -41,28 +41,7 @@ const swrConfig = {
   focusThrottleInterval: 5000,
   // Cache settings - use Map for better performance
   provider: () => new Map(),
-  // Compare function to detect vote changes instantly
-  compare: (a: any, b: any) => {
-    // If comparing projects, check if votes changed
-    if (a?.votes && b?.votes) {
-      const votesChanged = 
-        a.votes.up !== b.votes.up || 
-        a.votes.down !== b.votes.down || 
-        a.votes.net !== b.votes.net ||
-        a.userVote !== b.userVote
-      
-      if (votesChanged) {
-        console.log('🗳️ Vote change detected:', { 
-          old: a.votes, 
-          new: b.votes,
-          oldUserVote: a.userVote,
-          newUserVote: b.userVote
-        })
-        return false // Data changed, trigger update
-      }
-    }
-    return a === b // Default comparison
-  }
+  // REMOVED: compare function was causing infinite loops
 }
 
 interface SWRConfigProviderProps {

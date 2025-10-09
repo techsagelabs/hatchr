@@ -25,16 +25,7 @@ export function VoteControls({
     revalidateOnMount: false, // Don't revalidate on mount if we have initial data
     revalidateOnFocus: false, // Realtime handles this
     refreshInterval: 0, // Realtime handles updates
-    compare: (a, b) => {
-      // Compare votes to detect changes instantly
-      if (!a || !b) return false
-      const votesEqual = 
-        a.votes?.up === b.votes?.up && 
-        a.votes?.down === b.votes?.down && 
-        a.votes?.net === b.votes?.net &&
-        a.userVote === b.userVote
-      return votesEqual && a.id === b.id
-    }
+    // REMOVED: compare function was causing infinite re-renders
   })
   const [busy, setBusy] = useState(false)
   const [showSignUpModal, setShowSignUpModal] = useState(false)
