@@ -16,7 +16,37 @@ interface VoteContext {
 async function voteWithRegularClient(context: VoteContext, supabase: any) {
   console.log(`[Vote] Attempting regular client vote for user ${context.userId}`)
   
-  // First, try to upsert the vote
+  // Check if user already has a vote on this project
+  const { data: existingVote, error: checkError } = await supabase
+    .from('votes')
+    .select('vote_type')
+    .eq('project_id', context.projectId)
+    .eq('user_id', context.userId)
+    .maybeSingle()
+
+  if (checkError) {
+    console.error('[Vote] Failed to check existing vote:', checkError)
+    throw checkError
+  }
+
+  // If user is clicking the same vote they already have, remove it
+  if (existingVote && existingVote.vote_type === context.direction) {
+    console.log(`[Vote] Removing existing ${context.direction} vote`)
+    const { error: deleteError } = await supabase
+      .from('votes')
+      .delete()
+      .eq('project_id', context.projectId)
+      .eq('user_id', context.userId)
+
+    if (deleteError) {
+      console.error('[Vote] Failed to remove vote:', deleteError)
+      throw deleteError
+    }
+
+    return null // Vote removed
+  }
+
+  // Otherwise, upsert the new vote (create or update)
   const { data: voteData, error: voteError } = await supabase
     .from('votes')
     .upsert(
@@ -50,6 +80,37 @@ async function voteWithServiceRole(context: VoteContext, userSupabase: any) {
         throw new Error('User ID mismatch in service role operation')
       }
 
+      // Check if user already has a vote on this project
+      const { data: existingVote, error: checkError } = await adminClient
+        .from('votes')
+        .select('vote_type')
+        .eq('project_id', context.projectId)
+        .eq('user_id', context.userId)
+        .maybeSingle()
+
+      if (checkError) {
+        console.error('[Vote] Failed to check existing vote:', checkError)
+        throw checkError
+      }
+
+      // If user is clicking the same vote they already have, remove it
+      if (existingVote && existingVote.vote_type === context.direction) {
+        console.log(`[Vote] Removing existing ${context.direction} vote`)
+        const { error: deleteError } = await adminClient
+          .from('votes')
+          .delete()
+          .eq('project_id', context.projectId)
+          .eq('user_id', context.userId)
+
+        if (deleteError) {
+          console.error('[Vote] Failed to remove vote:', deleteError)
+          throw deleteError
+        }
+
+        return null // Vote removed
+      }
+
+      // Otherwise, upsert the new vote (create or update)
       const { data, error } = await adminClient
         .from('votes')
         .upsert(
