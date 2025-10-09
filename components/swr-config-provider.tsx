@@ -22,7 +22,7 @@ const fetcher = async (url: string) => {
 const swrConfig = {
   fetcher,
   // Cache settings optimized for realtime updates
-  revalidateOnFocus: false, // Don't refetch when window gets focus (realtime handles this)
+  revalidateOnFocus: true, // 📱 MOBILE FIX: Revalidate on focus for mobile devices
   revalidateOnReconnect: true, // Refetch when reconnecting to internet
   revalidateIfStale: true, // Revalidate stale data immediately
   shouldRetryOnError: (error: any) => {

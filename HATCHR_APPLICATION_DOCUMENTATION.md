@@ -1069,17 +1069,21 @@ SELECT * FROM auth.users WHERE id = auth.uid();
 - 🏠 **Home Page Carousel**: Project cards on home page now display media carousels for multi-image projects
 
 #### **Bug Fixes & Enhancements (Latest)**
+- 📱 **CRITICAL FIX**: Mobile devices not showing real-time updates (added visibility change handling)
 - ⚡ **CRITICAL FIX**: Slow vote updates (reduced from 2-10s delay to <200ms instant updates)
+- 🐛 **Fixed**: React infinite loop error #185 (removed problematic compare functions)
 - 🐛 **Fixed**: Images cropped to 16:9 aspect ratio (removed forced aspect-video constraint, images now show fully)
 - 🐛 **Fixed**: Carousel navigation buttons not working on home page (removed Link wrapper interference)
 - 🐛 **Fixed**: Video upload MIME type error (Supabase Storage configuration)
 - 🐛 **Fixed**: Google OAuth "refresh_token_not_found" error in production (added access_type=offline)
 - 🐛 **Fixed**: Google OAuth "Database error saving new user" (added username column + auto-generation)
 - 🔇 **Removed**: User onboarding popup (disabled by user request)
+- ✨ **Enhanced**: Automatic data refresh when app returns from background (mobile)
 - ✨ **Enhanced**: Instant realtime vote updates with aggressive SWR cache invalidation
 - ✨ **Enhanced**: Images now display at natural aspect ratio with full visibility
 - ✨ **Enhanced**: Added touch swipe support for mobile carousel navigation
 - ✨ **Enhanced**: Automatic username generation for OAuth users from email
+- 📝 **Added**: Mobile visibility change detection for seamless updates
 - 📝 **Added**: Guide for configuring Supabase Storage to accept video uploads
 - 📝 **Added**: Complete Google OAuth production configuration guide
 - 📝 **Added**: Database migration for OAuth user creation

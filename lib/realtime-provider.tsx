@@ -39,6 +39,27 @@ export function RealtimeProvider({ children }: RealtimeProviderProps) {
     console.log('🔄 Setting up real-time subscriptions...')
     setConnectionStatus('connecting')
     
+    // 📱 MOBILE FIX: Handle page visibility changes
+    // Mobile browsers pause WebSocket connections when app goes to background
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        console.log('📱 App became visible - forcing data refresh')
+        // Refresh all data when user returns to the app
+        mutate('/api/projects')
+        mutate('/api/notifications')
+        mutate('/api/connections')
+      }
+    }
+    
+    // 📱 MOBILE FIX: Handle window focus
+    const handleFocus = () => {
+      console.log('📱 Window focused - forcing data refresh')
+      mutate('/api/projects')
+    }
+    
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    window.addEventListener('focus', handleFocus)
+    
     // Add timeout for connection attempts
     const connectionTimeout = setTimeout(() => {
       console.warn('⏰ Real-time connection timeout after 10 seconds')
@@ -257,6 +278,11 @@ export function RealtimeProvider({ children }: RealtimeProviderProps) {
     return () => {
       console.log('🧹 Cleaning up real-time subscriptions')
       clearTimeout(connectionTimeout)
+      
+      // Remove event listeners
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+      window.removeEventListener('focus', handleFocus)
+      
       try {
         votesChannel?.unsubscribe()
         commentsChannel?.unsubscribe()

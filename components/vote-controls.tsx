@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import useSWR, { mutate as globalMutate } from "swr"
 import { fetcher } from "@/lib/fetcher"
 import type { ProjectWithUserVote, VoteDirection } from "@/lib/types"
@@ -23,12 +23,27 @@ export function VoteControls({
     // ⚡ INSTANT UPDATES: Aggressive revalidation for vote changes
     dedupingInterval: 100, // Very short deduping (100ms) for instant updates
     revalidateOnMount: false, // Don't revalidate on mount if we have initial data
-    revalidateOnFocus: false, // Realtime handles this
+    revalidateOnFocus: true, // 📱 MOBILE FIX: Revalidate on focus for mobile devices
     refreshInterval: 0, // Realtime handles updates
     // REMOVED: compare function was causing infinite re-renders
   })
   const [busy, setBusy] = useState(false)
   const [showSignUpModal, setShowSignUpModal] = useState(false)
+  
+  // 📱 MOBILE FIX: Revalidate when page becomes visible (mobile background handling)
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        // Revalidate this specific project when user returns to app
+        mutate()
+      }
+    }
+    
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+    }
+  }, [mutate])
 
   function handleVoteClick(dir: Exclude<VoteDirection, null>) {
     // Wait for auth to load before checking authentication
