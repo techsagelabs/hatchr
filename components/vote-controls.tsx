@@ -20,6 +20,21 @@ export function VoteControls({
   const { user, loading } = useAuth()
   const { data, mutate } = useSWR<ProjectWithUserVote>(`/api/projects/${projectId}`, fetcher, {
     fallbackData: initial,
+    // ⚡ INSTANT UPDATES: Aggressive revalidation for vote changes
+    dedupingInterval: 100, // Very short deduping (100ms) for instant updates
+    revalidateOnMount: false, // Don't revalidate on mount if we have initial data
+    revalidateOnFocus: false, // Realtime handles this
+    refreshInterval: 0, // Realtime handles updates
+    compare: (a, b) => {
+      // Compare votes to detect changes instantly
+      if (!a || !b) return false
+      const votesEqual = 
+        a.votes?.up === b.votes?.up && 
+        a.votes?.down === b.votes?.down && 
+        a.votes?.net === b.votes?.net &&
+        a.userVote === b.userVote
+      return votesEqual && a.id === b.id
+    }
   })
   const [busy, setBusy] = useState(false)
   const [showSignUpModal, setShowSignUpModal] = useState(false)
@@ -139,9 +154,16 @@ export function VoteControls({
         throw new Error('Unrecognized response format')
       }
       
+      // ⚡ INSTANT UPDATE: Update local state and force global revalidation
       await mutate(fresh, false)
-      console.log('✅ Vote UI updated successfully')
-      // Real-time subscriptions will handle global updates automatically
+      
+      // Force immediate revalidation from server to get latest vote counts
+      await mutate(undefined, { revalidate: true })
+      
+      // Also trigger global project list update
+      globalMutate('/api/projects', undefined, { revalidate: true })
+      
+      console.log('✅ Vote UI updated successfully with forced revalidation')
     } catch (error) {
       console.error('Error voting:', error)
       // Revert optimistic update

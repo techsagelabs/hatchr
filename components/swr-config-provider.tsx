@@ -18,13 +18,13 @@ const fetcher = async (url: string) => {
   return res.json()
 }
 
-// ✅ OPTIMIZED: Performance-focused SWR configuration
+// ✅ OPTIMIZED: Performance-focused SWR configuration with instant vote updates
 const swrConfig = {
   fetcher,
-  // Cache settings for better performance
-  revalidateOnFocus: false, // Don't refetch when window gets focus
+  // Cache settings optimized for realtime updates
+  revalidateOnFocus: false, // Don't refetch when window gets focus (realtime handles this)
   revalidateOnReconnect: true, // Refetch when reconnecting to internet
-  revalidateIfStale: true, // Revalidate stale data
+  revalidateIfStale: true, // Revalidate stale data immediately
   shouldRetryOnError: (error: any) => {
     // Don't retry on 4xx errors
     if (error.status >= 400 && error.status < 500) return false
@@ -33,14 +33,36 @@ const swrConfig = {
   errorRetryCount: 3, // Retry failed requests 3 times
   errorRetryInterval: 5000, // Wait 5 seconds between retries
   loadingTimeout: 10000, // 10 second timeout
-  // Dedupe requests for 2 seconds
-  dedupingInterval: 2000,
+  // ⚡ CRITICAL FIX: Reduced deduping interval for instant vote updates
+  dedupingInterval: 200, // Only 200ms (was 2000ms) - allow rapid updates
   // Background revalidation settings
-  refreshInterval: 0, // Disable automatic refresh by default
+  refreshInterval: 0, // Disable automatic refresh (realtime handles updates)
   // Focus revalidation only for critical data
   focusThrottleInterval: 5000,
-  // Cache settings
-  provider: () => new Map(), // Use Map for better performance than default cache
+  // Cache settings - use Map for better performance
+  provider: () => new Map(),
+  // Compare function to detect vote changes instantly
+  compare: (a: any, b: any) => {
+    // If comparing projects, check if votes changed
+    if (a?.votes && b?.votes) {
+      const votesChanged = 
+        a.votes.up !== b.votes.up || 
+        a.votes.down !== b.votes.down || 
+        a.votes.net !== b.votes.net ||
+        a.userVote !== b.userVote
+      
+      if (votesChanged) {
+        console.log('🗳️ Vote change detected:', { 
+          old: a.votes, 
+          new: b.votes,
+          oldUserVote: a.userVote,
+          newUserVote: b.userVote
+        })
+        return false // Data changed, trigger update
+      }
+    }
+    return a === b // Default comparison
+  }
 }
 
 interface SWRConfigProviderProps {

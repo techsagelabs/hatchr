@@ -54,31 +54,49 @@ export function RealtimeProvider({ children }: RealtimeProviderProps) {
 
     try {
 
-    // 1. VOTES REAL-TIME - Fix voting sync issues
+    // 1. VOTES REAL-TIME - ⚡ Instant voting sync with aggressive cache invalidation
     votesChannel = supabase
       .channel('public:votes')
       .on('postgres_changes', {
         event: '*',
         schema: 'public',
         table: 'votes'
-      }, (payload) => {
-        console.log('🗳️ Vote update:', payload)
+      }, async (payload) => {
+        console.log('🗳️ Vote update received:', payload)
         
-        // Refresh projects list and individual project data
-        mutate('/api/projects')
-        if (payload.new?.project_id) {
-          mutate(`/api/projects/${payload.new.project_id}`)
-        }
-        if (payload.old?.project_id) {
-          mutate(`/api/projects/${payload.old.project_id}`)
+        const projectId = payload.new?.project_id || payload.old?.project_id
+        
+        if (projectId) {
+          // ⚡ INSTANT UPDATE: Force revalidation with revalidate: true
+          console.log(`⚡ Forcing instant revalidation for project ${projectId}`)
+          
+          // Update the specific project immediately
+          await mutate(
+            `/api/projects/${projectId}`,
+            undefined, // Let SWR fetch fresh data
+            { revalidate: true } // Force immediate revalidation
+          )
+          
+          // Also update the projects list with a slight delay to batch updates
+          setTimeout(() => {
+            mutate('/api/projects', undefined, { revalidate: true })
+          }, 100)
+          
+          console.log('✅ Vote cache invalidated and revalidating')
+        } else {
+          // Fallback: refresh everything if we can't determine project ID
+          console.log('⚠️ No project ID in vote payload, refreshing all projects')
+          await mutate('/api/projects', undefined, { revalidate: true })
         }
       })
       .subscribe((status) => {
         console.log('Votes subscription status:', status)
         if (status === 'SUBSCRIBED') {
+          console.log('✅ Votes realtime channel SUBSCRIBED')
           clearTimeout(connectionTimeout)
           setConnectionStatus('connected')
         } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+          console.error('❌ Votes realtime channel error:', status)
           clearTimeout(connectionTimeout)
           setConnectionStatus('disconnected')
         }
