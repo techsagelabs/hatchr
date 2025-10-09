@@ -203,7 +203,15 @@ export function VoteControls({
             "hover:bg-black/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-black/20",
           )}
         >
-          <Triangle className={cn("h-5 w-5", "stroke-[2.5] text-black", upActive && "opacity-100")} aria-hidden />
+          <Triangle 
+            className={cn(
+              "h-5 w-5 transition-all",
+              upActive 
+                ? "fill-orange-500 text-orange-500 stroke-orange-500" 
+                : "fill-none text-black stroke-[2.5]"
+            )} 
+            aria-hidden 
+          />
         </button>
 
         <span aria-live="polite" className="mx-3 text-sm font-medium tabular-nums tracking-[-0.01em]">
@@ -222,7 +230,12 @@ export function VoteControls({
           )}
         >
           <Triangle
-            className={cn("h-5 w-5 rotate-180", "stroke-[2.5] text-black", downActive && "opacity-100")}
+            className={cn(
+              "h-5 w-5 rotate-180 transition-all",
+              downActive 
+                ? "fill-blue-500 text-blue-500 stroke-blue-500" 
+                : "fill-none text-black stroke-[2.5]"
+            )}
             aria-hidden
           />
         </button>
