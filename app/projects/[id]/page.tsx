@@ -8,6 +8,11 @@ import { Embed } from "@/components/embed"
 import { CommentThread } from "@/components/comment-thread"
 import { ProjectActions } from "@/components/project-actions"
 import { ImageCarousel } from "@/components/ui/image-carousel"
+import { ProjectDetailClient } from "@/components/project-detail-client"
+
+// Force dynamic rendering to ensure fresh data
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
 
 export default async function ProjectDetail({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -16,9 +21,10 @@ export default async function ProjectDetail({ params }: { params: Promise<{ id: 
   if (!project) return notFound()
 
   return (
-    <main>
-      <Navbar />
-      <article className="mx-auto max-w-3xl px-4 py-6">
+    <ProjectDetailClient projectId={id}>
+      <main>
+        <Navbar />
+        <article className="mx-auto max-w-3xl px-4 py-6">
         <header className="flex items-start justify-between gap-4">
           <div className="flex-1">
             <div className="flex items-start justify-between">
@@ -131,5 +137,6 @@ export default async function ProjectDetail({ params }: { params: Promise<{ id: 
         <CommentThread projectId={project.id} />
       </article>
     </main>
+    </ProjectDetailClient>
   )
 }

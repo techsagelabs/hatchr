@@ -1069,6 +1069,7 @@ SELECT * FROM auth.users WHERE id = auth.uid();
 - 🏠 **Home Page Carousel**: Project cards on home page now display media carousels for multi-image projects
 
 #### **Bug Fixes & Enhancements (Latest)**
+- 🐛 **Fixed**: Project detail page not updating votes automatically (added realtime subscription)
 - 🐛 **Fixed**: Vote removal not working (clicking same vote now properly removes it)
 - 🎨 **Enhanced**: Vote triangles now fill with color (orange for upvote, blue for downvote)
 - 📱 **CRITICAL FIX**: Mobile devices not showing real-time updates (added visibility change handling)
