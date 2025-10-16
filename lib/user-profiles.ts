@@ -81,27 +81,80 @@ export async function createOrUpdateUserProfile(
   avatarUrl?: string
 ): Promise<UserProfile | null> {
   try {
+    console.log('🔄 Creating/updating profile for user:', userId)
     const supabase = await createServerSupabaseClient()
+    
+    // Check if profile already exists
+    const { data: existingProfile } = await supabase
+      .from('user_profiles')
+      .select('username, display_name, avatar_url')
+      .eq('user_id', userId)
+      .maybeSingle()
+    
+    // Generate username if creating new profile (and no existing username)
+    let username = existingProfile?.username
+    if (!username) {
+      // Create username from display name or user ID
+      const baseUsername = displayName
+        ? displayName.toLowerCase().replace(/[^a-z0-9]/g, '').substring(0, 25)
+        : `user_${userId.substring(0, 8)}`
+      
+      // Ensure minimum length
+      username = baseUsername.length >= 3 ? baseUsername : `user_${userId.substring(0, 8)}`
+      
+      // Check for uniqueness and add number suffix if needed
+      let finalUsername = username
+      let counter = 1
+      while (true) {
+        const { data: existing } = await supabase
+          .from('user_profiles')
+          .select('id')
+          .eq('username', finalUsername)
+          .maybeSingle()
+        
+        if (!existing) break
+        
+        finalUsername = `${username}_${counter}`
+        counter++
+        
+        if (counter > 99) {
+          // Fallback to random suffix
+          finalUsername = `${username}_${Date.now().toString().substring(8)}`
+          break
+        }
+      }
+      
+      username = finalUsername
+      console.log('📝 Generated username:', username)
+    }
     
     const { data: profile, error } = await supabase
       .from('user_profiles')
       .upsert({
         user_id: userId,
+        username: username,
         display_name: displayName,
         avatar_url: avatarUrl,
         updated_at: new Date().toISOString()
       }, { onConflict: 'user_id' })
       .select()
-      .single()
+      .maybeSingle()
 
     if (error) {
-      console.error('Error creating/updating user profile:', error)
+      console.error('❌ Error creating/updating user profile:', error)
+      console.error('Error details:', { message: error.message, code: error.code, details: error.details })
       return null
     }
 
-    return profile ? formatProfile(profile) : null
+    if (!profile) {
+      console.error('❌ No profile returned after upsert')
+      return null
+    }
+
+    console.log('✅ Profile created/updated successfully:', profile.id)
+    return formatProfile(profile)
   } catch (error) {
-    console.error('Error in createOrUpdateUserProfile:', error)
+    console.error('❌ Error in createOrUpdateUserProfile:', error)
     return null
   }
 }

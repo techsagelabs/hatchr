@@ -1112,6 +1112,7 @@ SELECT * FROM auth.users WHERE id = auth.uid();
 - 🏠 **Home Page Carousel**: Project cards on home page now display media carousels for multi-image projects
 
 #### **Bug Fixes & Enhancements (Latest)**
+- 🔧 **FIXED**: Profile creation failing - "Failed to create or update user profile" (added username generation)
 - 🔧 **FIXED**: PGRST116 error (changed .single() to .maybeSingle() + safe migration)
 - 🔧 **FIXED**: Profile update 500 error in production (improved error handling + migration guide)
 - ✅ **Verified**: Profile editing fully functional (username, bio, image, links)
