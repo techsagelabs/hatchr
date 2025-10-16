@@ -188,7 +188,7 @@ export async function updateUserProfile(updates: UserProfileUpdate): Promise<Use
       .update(updateData)
       .eq('user_id', user.id)
       .select()
-      .single()
+      .maybeSingle() // Use maybeSingle instead of single to avoid PGRST116 error
 
     if (error) {
       console.error('❌ Error updating user profile:', error)
@@ -205,13 +205,28 @@ export async function updateUserProfile(updates: UserProfileUpdate): Promise<Use
         throw new Error('Database migration required. Please run the username migration script.')
       }
       
+      // Handle PGRST116 error (multiple rows or result parsing issue)
+      if (error.code === 'PGRST116') {
+        console.error('⚠️ Multiple profiles found or result parsing issue')
+        throw new Error('Database integrity issue: Multiple profiles found for user or invalid result format.')
+      }
+      
       // Throw the error with full details for better debugging
       throw new Error(`Database update failed: ${error.message} (code: ${error.code})`)
     }
 
     if (!profile) {
-      console.error('❌ No profile returned after update')
-      return null
+      console.error('❌ No profile returned after update - user may not have a profile yet')
+      console.error('Attempting to create profile...')
+      
+      // Try to create the profile if it doesn't exist
+      const newProfile = await createOrUpdateUserProfile(user.id, user.name || 'User', user.avatarUrl)
+      if (newProfile) {
+        console.log('✅ Created new profile for user:', newProfile.id)
+        return newProfile
+      }
+      
+      throw new Error('Failed to create or update user profile')
     }
 
     console.log('✅ Profile updated successfully:', profile.id)
