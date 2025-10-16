@@ -35,15 +35,23 @@ export async function GET() {
 
 export async function PUT(req: Request) {
   try {
+    console.log('🟡 [API] PUT /api/user/profile - START')
+    
     const user = await getCurrentUser()
+    console.log('🟡 [API] Current user:', user ? `${user.id} (${user.name})` : 'null')
+    
     if (!user) {
+      console.log('❌ [API] No user found - returning 401')
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
+    console.log('🟡 [API] Reading request body...')
     const body = await req.json()
+    console.log('🟡 [API] Request body received:', Object.keys(body))
 
     // Basic validation
     if (!body || typeof body !== 'object') {
+      console.log('❌ [API] Invalid request body')
       return NextResponse.json({ error: "Invalid request body" }, { status: 400 })
     }
     
@@ -96,19 +104,41 @@ export async function PUT(req: Request) {
       location: body.location,
     }
 
+    console.log('🟡 [API] Checking if user profile exists...')
+    
     // Ensure user profile exists first
     let profile = await getCurrentUserProfile()
+    console.log('🟡 [API] Existing profile:', profile ? `Found (${profile.id})` : 'Not found')
+    
     if (!profile) {
-      profile = await createOrUpdateUserProfile(user.id, user.name, user.avatarUrl)
+      console.log('🟡 [API] Creating new profile...')
+      profile = await createOrUpdateUserProfile(user.id, user.name || 'User', user.avatarUrl)
+      console.log('🟡 [API] Profile creation result:', profile ? `Created (${profile.id})` : 'Failed')
+      
+      if (!profile) {
+        console.log('❌ [API] Failed to create profile')
+        return NextResponse.json({ 
+          error: "Failed to create user profile. Check server logs for details.",
+          details: "Profile creation returned null"
+        }, { status: 500 })
+      }
     }
 
+    console.log('🟡 [API] Updating profile with:', JSON.stringify(updates, null, 2))
+    
     // Update the profile
     const updatedProfile = await updateUserProfile(updates)
+    console.log('🟡 [API] Update result:', updatedProfile ? `Success (${updatedProfile.id})` : 'Failed')
     
     if (!updatedProfile) {
-      return NextResponse.json({ error: "Failed to update profile. Check Supabase RLS/JWT configuration." }, { status: 500 })
+      console.log('❌ [API] Profile update returned null')
+      return NextResponse.json({ 
+        error: "Failed to update profile. Check Supabase RLS/JWT configuration.",
+        details: "Update operation returned null" 
+      }, { status: 500 })
     }
 
+    console.log('✅ [API] Profile update successful!')
     return NextResponse.json(updatedProfile)
   } catch (error: any) {
     console.error('❌ Error in PUT /api/user/profile:', error)

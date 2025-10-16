@@ -1,5 +1,7 @@
 export type User = {
   id: string
+  email?: string
+  name?: string // Display name or full name
   username: string
   avatarUrl?: string
   bio?: string | null

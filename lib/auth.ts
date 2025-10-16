@@ -36,20 +36,30 @@ export async function getCurrentUser(): Promise<User | null> {
     const { data: { user }, error } = await supabase.auth.getUser()
     
     if (error || !user) {
+      console.log('❌ [AUTH] No authenticated user')
       return null
     }
 
+    console.log('🔍 [AUTH] Authenticated user:', user.id)
+
     // Get user profile from our custom user_profiles table
-    const { data: profile } = await supabase
+    const { data: profile, error: profileError } = await supabase
       .from('user_profiles')
       .select('*')
       .eq('user_id', user.id)
-      .single()
+      .maybeSingle() // Use maybeSingle to avoid error if profile doesn't exist
+
+    if (profileError) {
+      console.error('⚠️ [AUTH] Error fetching profile:', profileError)
+    }
+
+    console.log('🔍 [AUTH] Profile found:', profile ? 'Yes' : 'No')
 
     return {
       id: user.id,
       email: user.email!,
-      username: profile?.display_name || user.user_metadata?.username || user.email?.split('@')[0] || 'user',
+      name: profile?.display_name || user.user_metadata?.full_name || user.email?.split('@')[0] || 'User',
+      username: profile?.username || profile?.display_name || user.user_metadata?.username || user.email?.split('@')[0] || 'user',
       avatarUrl: profile?.avatar_url || user.user_metadata?.avatar_url,
       bio: profile?.bio,
       location: profile?.location,
@@ -59,7 +69,7 @@ export async function getCurrentUser(): Promise<User | null> {
       linkedinUrl: profile?.linkedin,
     }
   } catch (error) {
-    console.error('Error getting current user:', error)
+    console.error('❌ [AUTH] Error getting current user:', error)
     return null
   }
 }
