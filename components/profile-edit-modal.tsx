@@ -98,6 +98,7 @@ export function ProfileEditModal({
 
     setSaving(true)
     try {
+      console.log('🔄 Sending profile update request...')
       const response = await fetch('/api/user/profile', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
@@ -116,15 +117,41 @@ export function ProfileEditModal({
 
       if (!response.ok) {
         const error = await response.json()
-        if (error.message?.includes('Username is already taken')) {
+        console.error('❌ Profile update failed:', error)
+        
+        // Handle specific error codes
+        if (error.code === 'MIGRATION_REQUIRED') {
+          alert(
+            '⚠️ Database Migration Required\n\n' +
+            'The username field needs to be added to your production database.\n\n' +
+            'Please run the migration file:\n' +
+            '• add-username-to-user-profiles.sql\n\n' +
+            'In your Supabase Dashboard:\n' +
+            '1. Go to SQL Editor\n' +
+            '2. Paste the migration SQL\n' +
+            '3. Click Run\n\n' +
+            'See: FIX-PROFILE-UPDATE-500-ERROR.md for detailed instructions.'
+          )
+          setSaving(false)
+          return
+        }
+        
+        if (error.code === 'USERNAME_TAKEN' || error.message?.includes('Username is already taken')) {
           setUsernameError("Username is already taken")
           setSaving(false)
           return
         }
-        throw new Error(error.message || 'Failed to update profile')
+        
+        // Generic error handling with better messaging
+        const errorMessage = error.details 
+          ? `${error.error}\n\nDetails: ${error.details}` 
+          : error.error || 'Failed to update profile'
+        
+        throw new Error(errorMessage)
       }
 
       const updatedProfile = await response.json()
+      console.log('✅ Profile updated successfully')
       
       // Call the callback if provided
       if (onProfileUpdated) {
@@ -136,8 +163,8 @@ export function ProfileEditModal({
       onClose()
       
     } catch (error) {
-      console.error('Error updating profile:', error)
-      alert(`Failed to update profile: ${error instanceof Error ? error.message : 'Unknown error'}`)
+      console.error('❌ Error updating profile:', error)
+      alert(`Failed to update profile:\n\n${error instanceof Error ? error.message : 'Unknown error'}`)
     } finally {
       setSaving(false)
     }

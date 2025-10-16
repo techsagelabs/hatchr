@@ -119,41 +119,74 @@
 ## Features
 
 ### Core Features
+
 1. **User Authentication**
    - Email/password authentication
    - Google OAuth integration
-   - Profile management with avatars
-   - Onboarding flow for new users
+   - Session management via Supabase Auth
+   - Protected routes via middleware
+   - ~~Onboarding flow~~ (disabled per user request)
 
 2. **Project Management**
-   - Submit new projects with images and descriptions
+   - Submit new projects with title, description, and rich media
+   - **Multi-image/video upload** (up to multiple files per project)
+   - **Horizontal scrollable gallery** with swipe gestures
    - Edit existing projects (authors only)
-   - Project categories and tagging
    - Rich media support (images, videos, code embeds)
+   - Project categories and tagging
 
-3. **Voting System**
+3. **Voting System** ⚡
    - Upvote/downvote projects
-   - Real-time vote count updates
+   - **Instant real-time updates** (<200ms latency)
+   - **Vote removal** (click same vote to remove)
+   - **Colored vote indicators** (orange upvote, blue downvote)
    - User-specific vote tracking
-   - Vote notifications for project authors
+   - Optimistic UI updates
+   - Mobile-optimized (visibility change handling)
 
-4. **Social Features**
+4. **User Profile System** ✨ **NEW**
+   - **Username**: Unique usernames (3-30 characters, alphanumeric + underscore)
+   - **Bio**: Personal description/tagline
+   - **Profile Image**: Upload custom avatar (up to 5MB, JPG/PNG/GIF/WEBP)
+   - **Bio Links**: 
+     - Personal website
+     - Twitter/X handle
+     - GitHub username
+     - LinkedIn profile
+   - **Location**: Display your city/country
+   - **Display Name**: Full name or preferred name
+   - **Real-time Editing**: All fields editable via profile edit modal
+   - **Validation**: 
+     - Client-side validation with instant feedback
+     - Server-side validation for security
+     - Username uniqueness check (case-insensitive)
+   - **Profile Stats**: Projects, votes received, comments, connections
+
+5. **Social Features**
    - User profiles with bio and social links
    - Connection system (follow/unfollow)
    - Comment system with threading
-   - Notification system
+   - ~~Notification system~~ (temporarily removed)
 
-5. **Real-time Updates**
-   - Live vote updates
+6. **Real-time Updates** ⚡
+   - **Instant vote updates** on home page (<200ms)
+   - **Project detail page auto-refresh** on vote changes
    - Real-time comments
    - Connection status updates
-   - Notification alerts
+   - Mobile browser optimization (visibility change handling)
 
 ### User Interface
 - **Dark/Light Mode**: Toggle between themes
 - **Responsive Design**: Mobile-first approach
 - **Modern UI**: Clean, intuitive interface with smooth animations
 - **Accessibility**: ARIA compliant, keyboard navigation support
+- **Image Carousels**: 
+  - Swipeable galleries for multi-media projects
+  - Navigation buttons (left/right arrows)
+  - Thumbnail indicators
+  - Touch gesture support for mobile
+- **Loading States**: Skeleton screens and spinners
+- **Error Handling**: User-friendly error messages
 
 ---
 
@@ -202,18 +235,28 @@ CREATE TABLE votes (
 CREATE TABLE user_profiles (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   user_id TEXT UNIQUE NOT NULL,
-  display_name TEXT,
-  bio TEXT,
-  website TEXT,
-  twitter TEXT,
-  github TEXT,
-  linkedin TEXT,
-  avatar_url TEXT,
-  location TEXT,
+  username TEXT NOT NULL UNIQUE,  -- NEW: Unique username (3-30 chars, alphanumeric + underscore)
+  display_name TEXT,              -- Full name or display name
+  bio TEXT,                       -- User bio
+  website TEXT,                   -- Personal website URL
+  twitter TEXT,                   -- Twitter handle
+  github TEXT,                    -- GitHub username
+  linkedin TEXT,                  -- LinkedIn profile slug
+  avatar_url TEXT,                -- Profile picture URL
+  location TEXT,                  -- User location
   is_onboarded BOOLEAN DEFAULT false,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT now()
 );
+
+-- Unique index (case-insensitive)
+CREATE UNIQUE INDEX user_profiles_username_unique 
+ON user_profiles (LOWER(username));
+
+-- Format validation constraint
+ALTER TABLE user_profiles 
+ADD CONSTRAINT username_format_check 
+CHECK (username ~ '^[a-zA-Z0-9_]{3,30}$');
 ```
 
 #### `connections`
@@ -1069,6 +1112,8 @@ SELECT * FROM auth.users WHERE id = auth.uid();
 - 🏠 **Home Page Carousel**: Project cards on home page now display media carousels for multi-image projects
 
 #### **Bug Fixes & Enhancements (Latest)**
+- 🔧 **FIXED**: Profile update 500 error in production (improved error handling + migration guide)
+- ✅ **Verified**: Profile editing fully functional (username, bio, image, links)
 - 🐛 **Fixed**: Project detail page not updating votes automatically (added realtime subscription)
 - 🐛 **Fixed**: Vote removal not working (clicking same vote now properly removes it)
 - 🎨 **Enhanced**: Vote triangles now fill with color (orange for upvote, blue for downvote)

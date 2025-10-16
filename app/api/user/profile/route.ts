@@ -111,28 +111,47 @@ export async function PUT(req: Request) {
 
     return NextResponse.json(updatedProfile)
   } catch (error: any) {
-    console.error('Error in PUT /api/user/profile:', error)
+    console.error('❌ Error in PUT /api/user/profile:', error)
+    console.error('Error details:', {
+      message: error.message,
+      code: error.code,
+      details: error.details,
+      hint: error.hint,
+      stack: error.stack
+    })
     
     // Handle specific database constraint errors
     if (error.message?.includes('Username is already taken')) {
-      return NextResponse.json({ error: "Username is already taken" }, { status: 400 })
+      return NextResponse.json({ 
+        error: "Username is already taken",
+        code: "USERNAME_TAKEN"
+      }, { status: 400 })
     }
     
     if (error.message?.includes('Failed to validate username')) {
-      return NextResponse.json({ error: "Failed to validate username availability" }, { status: 500 })
-    }
-    
-    // Handle database column errors (if username column doesn't exist yet)
-    if (error.message?.includes('column "username" does not exist')) {
       return NextResponse.json({ 
-        error: "Database migration required. Please run the username migration script.",
-        details: "The username field has not been added to the database yet."
+        error: "Failed to validate username availability",
+        code: "VALIDATION_ERROR"
       }, { status: 500 })
     }
     
+    // Handle database column errors (if username column doesn't exist yet)
+    if (error.message?.includes('column "username" does not exist') || error.code === '42703') {
+      console.error('⚠️ Username column does not exist in production database')
+      return NextResponse.json({ 
+        error: "Database migration required. The username field needs to be added to the database.",
+        details: "Please run: add-username-to-user-profiles.sql in Supabase",
+        code: "MIGRATION_REQUIRED"
+      }, { status: 500 })
+    }
+    
+    // Log full error for debugging
+    console.error('Full error object:', JSON.stringify(error, null, 2))
+    
     return NextResponse.json({ 
       error: error.message || "Internal server error",
-      details: error.details || undefined
+      code: error.code || "UNKNOWN_ERROR",
+      details: error.details || "Check server logs for more information"
     }, { status: 500 })
   }
 }

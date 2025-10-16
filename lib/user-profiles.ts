@@ -109,29 +109,40 @@ export async function createOrUpdateUserProfile(
 export async function updateUserProfile(updates: UserProfileUpdate): Promise<UserProfile | null> {
   try {
     const user = await getCurrentUser()
-    if (!user) return null
+    if (!user) {
+      console.error('❌ updateUserProfile: No user found')
+      return null
+    }
+
+    console.log('🔄 Updating profile for user:', user.id)
+    console.log('📝 Update data:', JSON.stringify(updates, null, 2))
 
     const supabase = await createServerSupabaseClient()
     
     // Check if username column exists in the database
     let hasUsernameColumn = true
     try {
+      console.log('🔍 Checking if username column exists...')
       // Try to check if username column exists by querying table info
       const { error: columnError } = await supabase
         .from('user_profiles')
         .select('username')
         .limit(1)
-        .single()
+        .maybeSingle() // Use maybeSingle instead of single to avoid "multiple rows" error
         
       if (columnError && (
         columnError.message?.includes('column "username" does not exist') ||
         columnError.code === '42703'
       )) {
         hasUsernameColumn = false
-        console.warn('Username column does not exist yet, skipping username update')
+        console.warn('⚠️ Username column does not exist yet, skipping username update')
+      } else if (columnError) {
+        console.log('ℹ️ Column check error (non-critical):', columnError)
+      } else {
+        console.log('✅ Username column exists')
       }
     } catch (e) {
-      console.warn('Could not check username column existence, assuming it exists')
+      console.warn('⚠️ Could not check username column existence, assuming it exists:', e)
     }
     
     // If username is being updated and column exists, check for uniqueness first
@@ -170,6 +181,8 @@ export async function updateUserProfile(updates: UserProfileUpdate): Promise<Use
     if (updates.avatarUrl !== undefined) updateData.avatar_url = updates.avatarUrl
     if (updates.location !== undefined) updateData.location = updates.location
 
+    console.log('💾 Attempting to update database with:', updateData)
+
     const { data: profile, error } = await supabase
       .from('user_profiles')
       .update(updateData)
@@ -178,19 +191,33 @@ export async function updateUserProfile(updates: UserProfileUpdate): Promise<Use
       .single()
 
     if (error) {
-      console.error('Error updating user profile:', error)
+      console.error('❌ Error updating user profile:', error)
+      console.error('Error details:', {
+        message: error.message,
+        code: error.code,
+        details: error.details,
+        hint: error.hint
+      })
       
       // If it's a column error, provide a helpful message
-      if (error.message?.includes('column "username" does not exist')) {
+      if (error.message?.includes('column "username" does not exist') || error.code === '42703') {
+        console.error('⚠️ Username column does not exist - migration required')
         throw new Error('Database migration required. Please run the username migration script.')
       }
       
+      // Throw the error with full details for better debugging
+      throw new Error(`Database update failed: ${error.message} (code: ${error.code})`)
+    }
+
+    if (!profile) {
+      console.error('❌ No profile returned after update')
       return null
     }
 
-    return profile ? formatProfile(profile) : null
+    console.log('✅ Profile updated successfully:', profile.id)
+    return formatProfile(profile)
   } catch (error) {
-    console.error('Error in updateUserProfile:', error)
+    console.error('❌ Error in updateUserProfile:', error)
     throw error // Re-throw to be caught by API route
   }
 }
